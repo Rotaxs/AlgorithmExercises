@@ -1,0 +1,52 @@
+# Competitive programming / algorithm repo
+
+# Online judge helper files
+.cph/
+
+# Editor / IDE
+.vscode/
+.idea/
+.vs/
+
+# Build directories
+out/
+build/
+bin/
+cmake-build-*/
+CMakeFiles/
+
+# CMake / Ninja
+CMakeCache.txt
+compile_commands.json
+build.ninja
+.ninja_deps
+.ninja_log
+
+# C / C++ compiled artifacts
+*.exe
+*.out
+*.app
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+*.exp
+*.ilk
+*.pdb
+
+# Java / Python cache artifacts that may appear in mixed OJ practice
+*.class
+__pycache__/
+*.pyc
+
+# Local testcase / debug files
+input.txt
+output.txt
+in.txt
+out.txt
+err.txt
+debug.txt
+tempCodeRunnerFile.cpp
