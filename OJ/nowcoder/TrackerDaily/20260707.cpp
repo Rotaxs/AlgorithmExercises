@@ -8,7 +8,6 @@ using ull = unsigned long long;
 const int inf = 0x3f3f3f3f;
 const int N = 5e6 + 10;
 int cnt[70];
-vector<int> e[N];
 
 void solve()
 {
@@ -19,21 +18,16 @@ void solve()
     {
         cin >> a[i];
         all_or |= a[i];
-        for (int v = 0; v < 64; v++)
-        {
-            if ((a[i] & (1ll << v)))
-            {
-                cnt[v]++;
-                e[a[i]].push_back(v);
-            }
-        }
+        for (int v = 0; v < 63; v++)
+            if (((a[i] >> v) & 1)) cnt[v]++;
     }
     ll ans = 0;
     for (int i = 1; i <= n; i++)
     {
         ll tmp = all_or;
-        for (int v : e[a[i]])
+        for (int v = 0; v < 63; v++)
         {
+            if (!((a[i] >> v) & 1)) continue;
             if (cnt[v] > 1) continue;
             tmp &= ~(1ll << v);
         }
