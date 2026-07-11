@@ -62,7 +62,6 @@ void solve()
             over = true;
         } 
     }
-
     if (!gameover) 
     {
         num = m;
