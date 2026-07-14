@@ -7,7 +7,7 @@ using ull = unsigned long long;
 
 const int inf = 0x3f3f3f3f;
 
-map<string, bool> mp;
+map<string, int> mp;
 
 void solve()
 {
@@ -16,10 +16,11 @@ void solve()
     for (int i = 1; i <= n; i++)
     {
         string s; cin >> s;
-        if (mp[s])
+        mp[s]++;
+        if (mp[s] >= 2)
         {
             ans++;
-            mp[s] = false;;
+            mp[s] = 1;
         }
     }
     for (int i = 1; i <= q; i++)
@@ -28,10 +29,11 @@ void solve()
         if (op == 1)
         {
             string s; cin >> s;
-            if (mp[s])
+            mp[s]++;
+            if (mp[s] >= 2)
             {
                 ans++;
-                mp[s] = false;
+                mp[s] = 1;
             }
         }
         else if (op == 2)
