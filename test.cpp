@@ -5,41 +5,10 @@ using namespace std;
 using ll = long long;
 using ull = unsigned long long;
 
-const int inf = 0x3f3f3f3f;
-const int N = 5e6 + 10;
-int cnt[70];
-vector<int> e[N];
 
 void solve()
 {
-    int n; cin >> n;
-    vector<ll> a(n + 1);
-    ll all_or = 0;
-    for (int i = 1; i <= n; i++)
-    {
-        cin >> a[i];
-        all_or |= a[i];
-        for (int v = 0; v < 64; v++)
-        {
-            if ((a[i] & (1ll << v)))
-            {
-                cnt[v]++;
-                e[a[i]].push_back(v);
-            }
-        }
-    }
-    ll ans = 0;
-    for (int i = 1; i <= n; i++)
-    {
-        ll tmp = all_or;
-        for (int v : e[a[i]])
-        {
-            if (cnt[v] > 1) continue;
-            tmp &= ~(1ll << v);
-        }
-        ans = max(ans, tmp);
-    }
-    cout << ans << '\n';
+    
 }
 
 int main()
