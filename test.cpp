@@ -8,12 +8,9 @@ using ull = unsigned long long;
 
 void solve()
 {
-    int sum = 0;
-    for (int i = 0; i < 5; i++)
-    {
-        sum += pow(13, i) * 12;
-    }
-    cout << sum << endl;
+    bitset<10> bt = 1;
+    // bt[9] = 1;
+    cout << bt << endl;
 }
 
 int main()
