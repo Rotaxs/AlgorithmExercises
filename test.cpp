@@ -14,11 +14,8 @@ void print(multiset<int> &ms)
 
 void solve()
 {
-    multiset<int> ms {3, 2, 1, 2, 3, 5, 2};
-    ms.erase(ms.lower_bound(3));
-    print(ms);
-    cout << *ms.begin() << ' ' << *prev(ms.end()) << endl;
-    cout << ms.count(2) << endl;
+    less<int> cmp;
+    cout << cmp(1, 1) << endl;
 }
 
 int main()
