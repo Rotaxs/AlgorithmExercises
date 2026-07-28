@@ -5,12 +5,20 @@ using namespace std;
 using ll = long long;
 using ull = unsigned long long;
 
+void print(multiset<int> &ms) 
+{
+    for (auto e : ms)   
+        cout << e << ' ';
+    cout << endl;
+}
 
 void solve()
 {
-    bitset<10> bt = 1;
-    // bt[9] = 1;
-    cout << bt << endl;
+    multiset<int> ms {3, 2, 1, 2, 3, 5, 2};
+    ms.erase(ms.lower_bound(3));
+    print(ms);
+    cout << *ms.begin() << ' ' << *prev(ms.end()) << endl;
+    cout << ms.count(2) << endl;
 }
 
 int main()
