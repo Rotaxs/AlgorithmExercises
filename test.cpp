@@ -14,8 +14,9 @@ void print(multiset<int> &ms)
 
 void solve()
 {
-    less<int> cmp;
-    cout << cmp(1, 1) << endl;
+    ll res = 1;
+    for (int i = 20; i >= 1; --i) res *= i;
+    cout << res << endl;
 }
 
 int main()
