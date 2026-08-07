@@ -1,4 +1,5 @@
 #include "stdlib.h"
+#define bool _Bool
 
 struct SegTree {
     int n;
@@ -35,13 +36,13 @@ void pushUp(int p) {
 
 void pushDown(int p, int l, int r) {
     if (st.hasSet[p]) {
-        st.hasSet[p << 1] = true;
+        st.hasSet[p << 1] = 1;
         st.setVal[p << 1] = st.setVal[p];
         st.tree[p << 1] = st.setVal[p];
-        st.hasSet[p << 1 | 1] = true;
+        st.hasSet[p << 1 | 1] = 1;
         st.setVal[p << 1 | 1] = st.setVal[p];
         st.tree[p << 1 | 1] = st.setVal[p];
-        st.hasSet[p] = false;
+        st.hasSet[p] = 0;
     }
 }
 
@@ -59,7 +60,7 @@ void build(int p, int l, int r) {
 void update(int ql, int qr, int v, int p, int l, int r) {
     if (ql <= l && r <= qr) {
         st.tree[p] = v;
-        st.hasSet[p] = true;
+        st.hasSet[p] = 1;
         st.setVal[p] = v;
         return;
     }
