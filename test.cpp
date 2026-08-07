@@ -14,9 +14,8 @@ void print(multiset<int> &ms)
 
 void solve()
 {
-    ll res = 1;
-    for (int i = 20; i >= 1; --i) res *= i;
-    cout << res << endl;
+    string s = "abcde";
+    cout << s.substr(1, 2) << endl;
 }
 
 int main()
