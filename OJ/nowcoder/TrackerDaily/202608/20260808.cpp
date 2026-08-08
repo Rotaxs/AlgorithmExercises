@@ -22,7 +22,6 @@ void addEdge(int u, int v) {
 void solve()
 {
     int n; cin >> n;
-    vector<bool> black(n + 1);
 
     for (int i = 1; i < n; ++i) {
         int u, v; cin >> u >> v;
@@ -31,22 +30,17 @@ void solve()
     }
 
     int cnt = 0;
-    black[1] = true;
 
-    function<void(int, int)> dfs = [&](int u, int fa) {
+    function<void(int, int, bool)> dfs = [&](int u, int fa, bool black) {
+        if (black) cnt++;
         for (int e = head[u]; e; e = edge[e].ne) {
             int v = edge[e].to;
             if (v == fa) continue;
-            black[v] = !black[u];
-            dfs(v, u);
+            dfs(v, u, black ^ 1);
         }
     };
 
-    dfs(1, 0);
-
-    for (int i = 1; i <= n; ++i) {
-        if (black[i]) ++cnt;
-    }
+    dfs(1, 0, 1);
 
     cout << 1LL * cnt * (cnt + 1) / 2 << endl;
 
