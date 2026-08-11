@@ -5,8 +5,8 @@ using namespace std;
 using ll = long long;
 using ull = unsigned long long;
 
-const int inf = 0x3f3f3f3f;
-const ll inf  = 2e18;
+// const int inf = 0x3f3f3f3f;
+// const ll inf  = 2e18;
 
 void solve()
 {
