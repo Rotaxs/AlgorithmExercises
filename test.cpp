@@ -1,19 +1,43 @@
 #include <bits/stdc++.h>
+#define endl '\n'
 using namespace std;
 
-class Solution {
-public:
-    int lengthOfLongestSubstring(string s) {
-        int n = s.size();
-        unordered_map<char, int> lastSeen;
-        int ans = 0;
-        for (int l = 0, r = 0; r < n; ++r) {
-            if (lastSeen.count(s[r])) {
-                l = max(l, lastSeen[s[r]] + 1);
-            }
-            lastSeen[s[r]] = r;
-            ans = max(ans, r - l + 1);
-        }
-        return ans;
+using ll = long long;
+using ull = unsigned long long;
+
+// const int inf = 0x3f3f3f3f;
+// const ll inf  = 2e18;
+
+
+int dfs(int n, int i, int sum, int cnt) {
+    if (i > n * 2) {
+        return 1;
     }
-};
+    ll ans = 0;
+    if (cnt < n) {
+        ans += dfs(n, i + 1, sum + 1, cnt + 1);
+    }
+    if (sum > 0) {
+        ans += dfs(n, i + 1, sum - 1, cnt);
+    }
+    return ans;
+}
+
+void solve()
+{
+    int n; cin >> n;
+    ll ans = dfs(n, 1, 0, 0);
+    cout << ans << endl;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int _ = 1; 
+    // cin >> _;
+    while (_--) solve();
+    
+    return 0;
+}
