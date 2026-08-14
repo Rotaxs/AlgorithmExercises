@@ -2,6 +2,7 @@
 
 # Online judge helper files
 .cph/
+.cph-ng
 
 # Editor / IDE
 .vscode/
