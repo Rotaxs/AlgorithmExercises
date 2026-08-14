@@ -1,16 +1,18 @@
 #include <bits/stdc++.h>
 #define endl '\n'
+#ifndef ONLINE_JUDGE
+#define debug(x) cerr << #x << " = " << (x)  << " (Line " << __LINE__ << ")" << endl
+#else
+#define debug(x)
+#endif
 using namespace std;
 
 using ll = long long;
 using ull = unsigned long long;
 
-// const int inf = 0x3f3f3f3f;
-// const ll inf  = 2e18;
-
 void solve()
 {
-
+	
 }
 
 int main()
