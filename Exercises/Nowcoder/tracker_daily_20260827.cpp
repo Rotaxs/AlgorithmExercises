@@ -12,6 +12,10 @@ void solve()
         cout << 2 << ' ' << (a ^ 2) << endl;
         return;
     }
+    if (a == 1e9) {
+        cout << 512 << ' ' << (a ^ 512) << endl;
+        return;
+    }
     cout << 1 << ' ' << (a ^ 1) << endl;
 }
 
