@@ -5,7 +5,6 @@
 .cph-ng
 
 # Editor / IDE
-.vscode/
 .idea/
 .vs/
 *.swp
