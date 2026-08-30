@@ -1,5 +1,5 @@
 {
     "code-runner.executorMap": {
-        "cpp": "cd $dir && mkdir -p out && g++ $fileName -o out/$fileNameWithoutExt --std=c++17 -Wall && out/$fileNameWithoutExt"
+        "cpp": "cd $workspaceRoot && mkdir -p out && g++ $fullFileName -o out/$fileNameWithoutExt --std=c++17 -Wall && out/$fileNameWithoutExt"
     }
 }
