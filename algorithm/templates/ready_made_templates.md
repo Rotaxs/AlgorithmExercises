@@ -171,58 +171,6 @@ struct DualPriorityQueue {
 };
 ```
 
-## 数学
-
-### 矩阵快速幂
-
-```cpp
-struct Matrix {
-    int r, c;
-    int p;
-    vector<vector<long long>> mat;
-    Matrix(int r, int c, int mod = 1) : r(r), c(c), p(mod), mat(r, vector<long long>(c, 0)) {}
-
-    void build_identity() {
-        assert(r == c);
-        for (int i = 0; i < r; ++i) {
-            for (int j = 0; j < c; ++j) {
-                mat[i][j] = (i == j ? 1 : 0);
-            }
-        }
-    }
-
-    Matrix operator*(const Matrix& other) const {
-        assert(c == other.r);
-        assert(p == other.p);
-        Matrix res(r, other.c, p);
-        for (int i = 0; i < r; ++i) {
-            for (int k = 0; k < c; ++k) {
-                long long tmp = mat[i][k];
-                if (tmp == 0) continue;
-                for (int j = 0; j < other.c; ++j) {
-                    res.mat[i][j] = (res.mat[i][j] + tmp * other.mat[k][j]) % p;
-                    if (res.mat[i][j] < 0) res.mat[i][j] += p;
-                }
-            }
-        }
-        return res;
-    }
-
-    Matrix operator^(long long n) const {
-        assert(r == c);
-        Matrix res(r, c, p);
-        res.build_identity();
-        Matrix a = *this;
-        while (n > 0) {
-            if (n & 1) res = res * a;
-            a = a * a;
-            n >>= 1;
-        }
-        return res;
-    }
-};
-```
-
 ### 线段树
 
 #### 维护区间和：区间加 + 区查
@@ -762,3 +710,149 @@ public:
 };
 ```
 
+## 树论
+
+### 树的直径
+
+建图
+
+```cpp
+const int N = 1e5 + 10;
+
+struct Edge {
+    int ne, to;
+} edge[N << 1];
+
+int head[N], cnt;
+
+void addEdge(int u, int v) {
+    edge[++cnt] = { head[u], v };
+    head[u] = cnt;
+}
+```
+
+#### 两次 DFS
+
+```cpp
+// 无权树，两次 DFS 求直径
+// 第一次从任意点出发，找到最远点 A
+// 第二次从 A 出发，找到最远点 B
+// dist(A, B) 即为树的直径
+
+// 返回从 start 出发的最远点
+// maxLen 最终记录 start 到最远点的距离
+int findFarthest(int start, int &maxLen) {
+    int farthest = start;
+    maxLen = 0;
+
+    function<void(int, int, int)> dfs = [&](int u, int fa, int len) {
+        if (len > maxLen) {
+            maxLen = len;
+            farthest = u;
+        }
+
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa) continue;
+
+            dfs(v, u, len + 1);
+        }
+    };
+
+    dfs(start, 0, 0);
+
+    return farthest;
+}
+
+// 使用方法：
+//
+// int diameter;
+// int A = findFarthest(1, diameter);
+// int B = findFarthest(A, diameter);
+//
+// 此时：
+// A, B 为一组直径端点
+// diameter = dist(A, B)
+```
+
+#### 树形 DP
+
+也适用于带权树
+
+```cpp
+int dp[N]; // dp[u]：从 u 出发，只向子树方向走的最长距离
+int getDiameter() {
+    int ans = 0;
+    function<void(int, int)> dfs = [&](int u, int fa) {
+        int max1 = 0, max2 = 0; // u 向子树方向的最长链和次长链
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa) continue;
+            dfs(v, u);
+            int len = dp[v] + 1; // 从 u 经过 v 向下走的最长距离
+            if (len > max1) {
+                max2 = max1;
+                max1 = len;
+            } else if (len > max2) {
+                max2 = len;
+            }
+        }
+        dp[u] = max1;                // 向父节点只能贡献一条最长链
+        ans = max(ans, max1 + max2); // 经过 u 的最长路径由两条最长链拼成
+    };
+    dfs(1, 0);
+    return ans;
+}
+```
+
+## 数学
+
+### 矩阵快速幂
+
+```cpp
+struct Matrix {
+    int r, c;
+    int p;
+    vector<vector<long long>> mat;
+    Matrix(int r, int c, int mod = 1) : r(r), c(c), p(mod), mat(r, vector<long long>(c, 0)) {}
+
+    void build_identity() {
+        assert(r == c);
+        for (int i = 0; i < r; ++i) {
+            for (int j = 0; j < c; ++j) {
+                mat[i][j] = (i == j ? 1 : 0);
+            }
+        }
+    }
+
+    Matrix operator*(const Matrix& other) const {
+        assert(c == other.r);
+        assert(p == other.p);
+        Matrix res(r, other.c, p);
+        for (int i = 0; i < r; ++i) {
+            for (int k = 0; k < c; ++k) {
+                long long tmp = mat[i][k];
+                if (tmp == 0) continue;
+                for (int j = 0; j < other.c; ++j) {
+                    res.mat[i][j] = (res.mat[i][j] + tmp * other.mat[k][j]) % p;
+                    if (res.mat[i][j] < 0) res.mat[i][j] += p;
+                }
+            }
+        }
+        return res;
+    }
+
+    Matrix operator^(long long n) const {
+        assert(r == c);
+        Matrix res(r, c, p);
+        res.build_identity();
+        Matrix a = *this;
+        while (n > 0) {
+            if (n & 1) res = res * a;
+            a = a * a;
+            n >>= 1;
+        }
+        return res;
+    }
+};
+```
