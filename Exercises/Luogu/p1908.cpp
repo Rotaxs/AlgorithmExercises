@@ -1,55 +1,191 @@
-#include <iostream>
-#include <algorithm>
+// ========== 2026/09/09 ==========
+
+// 树状数组
+
+#include <bits/stdc++.h>
 using namespace std;
 
-const int N = 5 * 1e5 + 10;
-int nums[N], vals[N], n, len;
-int tree[N] = {0}; // 实际大小为 1 ~ len
-long long ans = 0;
+using ll = long long;
 
-int lowbit(int x) { return x & -x; }
-
-void add(int i, int v)
-{
-    while (i <= len)
-    {
-        tree[i] += v;
-        i += lowbit(i);
+struct BIT {
+    int n;
+    vector<ll> tree;
+    BIT(int n) : n(n), tree(n + 1, 0) {
     }
+    int lowbit(int x) {
+        return x & -x;
+    }
+    void add(int x, int k) {
+        while (x <= n) {
+            tree[x] += k;
+            x += lowbit(x);
+        }
+    }
+    ll query(int x) {
+        ll sum = 0;
+        while (x > 0) {
+            sum += tree[x];
+            x -= lowbit(x);
+        }
+        return sum;
+    }
+    ll query(int l, int r) {
+        return query(r) - query(l - 1);
+    }
+};
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n + 1), b;
+    int m = 0;
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        b.push_back(a[i]);
+    }
+
+    sort(b.begin(), b.end());
+
+    b.erase(unique(b.begin(), b.end()), b.end());
+
+    BIT bt(b.size());
+    ll ans = 0;
+    for (int i = 1; i <= n; ++i) {
+        int rank = lower_bound(b.begin(), b.end(), a[i]) - b.begin() + 1;
+        bt.add(rank, 1);
+        ans += i - bt.query(rank);
+    }
+    cout << ans << endl;
 }
 
-int sum(int i)
-{
-    int ret = 0;
-    while (i >= 1)
-    {
-        ret += tree[i];
-        i -= lowbit(i);
-    }
-    return ret;
-}
-
-int main()
-{
+int main() {
     ios_base::sync_with_stdio(0);
     cin.tie(0);
-    cin >> n;
-    for (int i = 1; i <= n; i++)
-    {
-        cin >> nums[i];
-        vals[i] = nums[i];
-    }
-    sort(vals + 1, vals + 1 + n);
-    len = unique(vals + 1, vals + 1 + n) - (vals + 1);
-    for (int i = n; i >= 1; i--)
-    {
-        int r = lower_bound(vals + 1, vals + 1 + len, nums[i]) - vals;
-        ans += sum(r - 1);
-        add(r, 1);
-    }
-    cout << ans << '\n';
+
+    solve();
+
     return 0;
 }
+
+// 分治
+
+// #include <bits/stdc++.h>
+// using namespace std;
+
+// using ll = long long;
+
+// void merge(vector<int>& arr, vector<int>& tmp, int l, int m, int r) {
+//     int i = l, j = m + 1, k = l;
+//     while (i <= m && j <= r) {
+//         if (arr[i] <= arr[j]) {
+//             tmp[k++] = arr[i++];
+//         } else {
+//             tmp[k++] = arr[j++];
+//         }
+//     }
+//     while (i <= m) {
+//         tmp[k++] = arr[i++];
+//     }
+//     while (j <= r) {
+//         tmp[k++] = arr[j++];
+//     }
+//     for (int p = l; p <= r; ++p) {
+//         arr[p] = tmp[p];
+//     }
+// }
+
+// ll getInversion(vector<int>& arr, vector<int>& tmp, int l, int r) {
+//     if (l == r) {
+//         return 0;
+//     }
+//     int m = (l + r) >> 1;
+//     ll l_cnt = getInversion(arr, tmp, l, m);
+//     ll r_cnt = getInversion(arr, tmp, m + 1, r);
+//     ll m_cnt = 0;
+//     for (int i = l, j = m + 1; j <= r; ++j) {
+//         while (i <= m && arr[i] <= arr[j]) {
+//             ++i;
+//         }
+//         m_cnt += m - i + 1;
+//     }
+//     merge(arr, tmp, l, m, r);
+//     return l_cnt + r_cnt + m_cnt;
+// }
+
+// void solve() {
+//     int n;
+//     cin >> n;
+//     vector<int> a(n + 1), tmp(n + 1);
+//     for (int i = 1; i <= n; ++i) {
+//         cin >> a[i];
+//     }
+//     ll ans = getInversion(a, tmp, 1, n);
+//     cout << ans << endl;
+// }
+
+// int main() {
+
+//     ios_base::sync_with_stdio(0);
+//     cin.tie(0);
+
+//     solve();
+//     return 0;
+// }
+
+// ========== 树状数组 =============
+
+// #include <iostream>
+// #include <algorithm>
+// using namespace std;
+
+// const int N = 5 * 1e5 + 10;
+// int nums[N], vals[N], n, len;
+// int tree[N] = {0}; // 实际大小为 1 ~ len
+// long long ans = 0;
+
+// int lowbit(int x) { return x & -x; }
+
+// void add(int i, int v)
+// {
+//     while (i <= len)
+//     {
+//         tree[i] += v;
+//         i += lowbit(i);
+//     }
+// }
+
+// int sum(int i)
+// {
+//     int ret = 0;
+//     while (i >= 1)
+//     {
+//         ret += tree[i];
+//         i -= lowbit(i);
+//     }
+//     return ret;
+// }
+
+// int main()
+// {
+//     ios_base::sync_with_stdio(0);
+//     cin.tie(0);
+//     cin >> n;
+//     for (int i = 1; i <= n; i++)
+//     {
+//         cin >> nums[i];
+//         vals[i] = nums[i];
+//     }
+//     sort(vals + 1, vals + 1 + n);
+//     len = unique(vals + 1, vals + 1 + n) - (vals + 1);
+//     for (int i = n; i >= 1; i--)
+//     {
+//         int r = lower_bound(vals + 1, vals + 1 + len, nums[i]) - vals;
+//         ans += sum(r - 1);
+//         add(r, 1);
+//     }
+//     cout << ans << '\n';
+//     return 0;
+// }
 
 // ====================== 分治 =======================
 
