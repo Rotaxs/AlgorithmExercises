@@ -777,7 +777,6 @@ int findFarthest(int start, int &maxLen) {
 
 #### 树形 DP
 
-也适用于带权树
 
 ```cpp
 int dp[N]; // dp[u]：从 u 出发，只向子树方向走的最长距离
