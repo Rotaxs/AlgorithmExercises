@@ -171,6 +171,146 @@ struct DualPriorityQueue {
 };
 ```
 
+### 树状数组
+
+#### 点修 + 区查
+
+```cpp
+struct BIT {
+    int n;
+    vector<ll> tree;
+    BIT(int n) : n(n), tree(n + 1, 0) {
+    }
+    int lowbit(int x) {
+        return x & -x;
+    }
+    void add(int x, int k) {
+        while (x <= n) {
+            tree[x] += k;
+            x += lowbit(x);
+        }
+    }
+    ll query(int x) {
+        ll sum = 0;
+        while (x > 0) {
+            sum += tree[x];
+            x -= lowbit(x);
+        }
+        return sum;
+    }
+    ll query(int l, int r) {
+        return query(r) - query(l - 1);
+    }
+};
+
+// 使用方法：
+// 适用于 1-index 数组
+// BIT bt(n);
+// bt.add(x, k); 原数组的第 x 位 +k
+// bt.query(x); 查询 [1, x] 前缀和
+// bt.query(l, r); 查询 [l, r] 区间和
+```
+
+#### 区修 + 点查
+
+```cpp
+struct BIT {
+    int n;
+    vector<ll> tree;
+    BIT(int n) : n(n), tree(n + 1, 0) {
+    }
+    int lowbit(int x) {
+        return x & -x;
+    }
+    // 差分数组 d[x] += k
+    void add(int x, ll k) {
+        while (x <= n) {
+            tree[x] += k;
+            x += lowbit(x);
+        }
+    }
+    ll query(int x) {
+        ll sum = 0;
+
+        while (x > 0) {
+            sum += tree[x];
+            x -= lowbit(x);
+        }
+
+        return sum;
+    }
+    // 原数组 [l, r] += k
+    void rangeAdd(int l, int r, ll k) {
+        add(l, k);
+        if (r + 1 <= n) {
+            add(r + 1, -k);
+        }
+    }
+};
+
+// 使用方法：
+// 维护 1-index 的差分数组
+// BIT bt(n);
+// bt.rangeAdd(l, r, k); 原数组 [l, r] 加 k
+// bt.query(x); 查询原数组 x 位置的值
+```
+
+#### 区修 + 区查
+
+```cpp
+struct BIT {
+    int n;
+    vector<ll> t1, t2;
+    BIT(int n) : n(n), t1(n + 1, 0), t2(n + 1, 0) {
+    }
+    int lowbit(int x) {
+        return x & -x;
+    }
+    void addTree(vector<ll>& t, int x, ll k) {
+        while (x <= n) {
+            t[x] += k;
+            x += lowbit(x);
+        }
+    }
+    void add(int l, int r, ll k) {
+        addTree(t1, l, k);
+        addTree(t2, l, l * k);
+
+        if (r + 1 <= n) {
+            addTree(t1, r + 1, -k);
+            addTree(t2, r + 1, -(r + 1) * k);
+        }
+    }
+    void add(int x, ll k) {
+        add(x, x, k);
+    }
+    ll query(vector<ll>& t, int x) {
+        ll res = 0;
+        while (x >= 1) {
+            res += t[x];
+            x -= lowbit(x);
+        }
+        return res;
+    }
+    ll query(int x) {
+        ll part1 = (x + 1) * query(t1, x);
+        ll part2 = query(t2, x);
+        return part1 - part2;
+    }
+    ll query(int l, int r) {
+        return query(r) - query(l - 1);
+    }
+};
+
+// 维护原数组的差分数组 t1 和 i * d 数组
+// 使用方法（适用于 1-index 数组）：
+// BIT bt(n);
+// bt.add(l, r, k); 原数组 [l, r] + k
+// bt.add(x, k); 原数组 [x] + k
+// bt.query(x); 查询原数组 [1, x] 的前缀和
+// bt.query(l, r); 查询原数组 [l, r] 的区间和
+```
+
 ### 线段树
 
 #### 维护区间和：区间加 + 区查
