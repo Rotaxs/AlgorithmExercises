@@ -5,19 +5,17 @@ using namespace std;
 using ll = long long;
 using ull = unsigned long long;
 
-void solve()
-{
-
+void solve() {
 }
 
-int main()
-{
+int main() {
     ios_base::sync_with_stdio(0);
     cin.tie(0);
-    
-    int _ = 1; 
+
+    int _ = 1;
     // cin >> _;
-    while (_--) solve();
-    
+    while (_--)
+        solve();
+
     return 0;
 }

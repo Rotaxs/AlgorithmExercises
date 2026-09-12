@@ -68,7 +68,7 @@ int main() {
     return 0;
 }
 
-// 分支
+// 分治
 
 // #include <bits/stdc++.h>
 // #define endl '\n'

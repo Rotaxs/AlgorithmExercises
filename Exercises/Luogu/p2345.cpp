@@ -4,10 +4,13 @@ using namespace std;
 
 using ll = long long;
 using ull = unsigned long long;
+using pii = pair<int, int>;
+
+const int MOD = 998244353;
 
 struct BIT {
     int n;
-    vector<int> tree;
+    vector<ll> tree;
     BIT(int n) : n(n), tree(n + 1, 0) {
     }
     int lowbit(int x) {
@@ -32,29 +35,29 @@ struct BIT {
 void solve() {
     int n;
     cin >> n;
-    vector<int> a(n + 1);
+    vector<pii> a(n + 1);
     int mx = 0;
     for (int i = 1; i <= n; ++i) {
-        cin >> a[i];
-        mx = max(mx, a[i]);
+        cin >> a[i].first >> a[i].second;
+        mx = max(mx, a[i].second);
     }
 
-    BIT bt1(mx), bt2(mx);
-    vector<int> pre(n + 1), suf(n + 1);
+    sort(a.begin() + 1, a.end());
 
-    for (int i = 1; i <= n; ++i) {
-        bt1.add(a[i], 1);
-        pre[i] = bt1.query(a[i] - 1);
-    }
-
-    for (int i = n; i >= 1; --i) {
-        bt2.add(a[i], 1);
-        suf[i] = n - i + 1 - bt2.query(a[i]);
-    }
-
+    BIT sum(mx), cnt(mx);
     ll ans = 0;
+
     for (int i = 1; i <= n; ++i) {
-        ans += 1ll * pre[i] * suf[i];
+        int v = a[i].first, x = a[i].second;
+        sum.add(x, x);
+        cnt.add(x, 1);
+
+        ll sumL = sum.query(x);
+        ll cntL = cnt.query(x);
+        ll sumR = sum.query(mx) - sumL;
+        ll cntR = cnt.query(mx) - cntL;
+
+        ans = (ans + v * (x * cntL - sumL + sumR - x * cntR)) % MOD;
     }
 
     cout << ans << endl;
