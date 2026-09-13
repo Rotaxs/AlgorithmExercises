@@ -1,0 +1,53 @@
+name: Update OJ stats
+
+on:
+  schedule:
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-oj-stats
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test statistics logic
+        run: python -m unittest discover -s tests -v
+      - name: Update and push statistics
+        env:
+          TARGET_BRANCH: ${{ github.event.repository.default_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            # This checkout is disposable. Regenerate against the latest remote
+            # commit after a competing push; never force-push or overwrite it.
+            git fetch origin "$TARGET_BRANCH"
+            git reset --hard "origin/$TARGET_BRANCH"
+            python scripts/update_oj_stats.py
+            git add README.md data/oj_stats.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m 'docs: update OJ solved counts'
+            if git push origin "HEAD:$TARGET_BRANCH"; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo 'Could not push statistics after three attempts.' >&2
+          exit 1
