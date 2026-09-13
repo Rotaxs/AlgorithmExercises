@@ -7,16 +7,17 @@
 
 | 平台 | 账号 | 通过题数 | 上次成功更新（北京时间） | 状态 |
 | --- | --- | ---: | --- | --- |
-| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 339 | 2026-09-13 11:25:19 | 正常 |
-| 牛客 ACM（练习） | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888/practice-coding) | 19 | 2026-09-13 11:25:19 | 正常 |
-| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-09-13 11:25:19 | 正常 |
-| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 86 | 2026-09-13 11:25:19 | 正常 |
-| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 40 | 2026-09-13 11:25:19 | 正常 |
+| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 339 | 2026-09-13 11:34:07 | 正常 |
+| 牛客（练习 / 比赛 / tracker） | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 92 | 2026-09-13 11:34:07 | 正常 |
+| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-09-13 11:34:07 | 正常 |
+| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 86 | 2026-09-13 11:34:07 | 正常 |
+| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 40 | 2026-09-13 11:34:07 | 正常 |
 
-**总通过题数：493**
+**总通过题数：566**
 
 统计口径：平台内按题目去重，总数为各平台通过题数之和，跨平台同题重复计数。
-牛客采用 ACM 练习页的“题已通过”，不包含比赛题；AtCoder 使用第三方 AtCoder Problems 的统计，可能有同步延迟。
+牛客合并 ACM 个人提交（含个人比赛）与主站提交（含 tracker / 每日一题），按统一 problemId 去重；团队赛仅计个人账号的通过记录，不计队伍账号的提交。
+AtCoder 使用第三方 AtCoder Problems 的统计，可能有同步延迟。
 每天北京时间 08:17 左右自动更新，也可在 GitHub Actions 中手动刷新。
 <!-- OJ-STATS:END -->
 
@@ -52,6 +53,7 @@
 ## 自动更新刷题统计
 
 - 账号配置在 `scripts/oj_accounts.json`，仅需公开用户名或 UID，无需密码、登录 Cookie 或 GitHub PAT。
+- 牛客合并 ACM 个人通过记录（含个人比赛）与主站通过记录（含 tracker / 每日一题），按统一 `problemId` 去重。`nowcoder_include_team` 默认 `false`，设为 `true` 时还会合并本人参赛队伍的通过记录；团队公开记录不能区分具体提交成员。
 - 使用 Python 3.12（无第三方依赖）运行 `python3 scripts/update_oj_stats.py`，更新 README 和 `data/oj_stats.json`；加 `--dry-run` 可只查看结果。
 - 将配置推送到 GitHub 默认分支后，工作流每天北京时间 08:17 左右执行（GitHub 调度可能延迟）。也可在 **Actions → Update OJ stats → Run workflow** 手动刷新。
 - 工作流使用自带的 `GITHUB_TOKEN` 提交更新，需要仓库允许 Actions 的 `contents: write` 权限，且默认分支允许机器人直接提交；若仓库策略禁止，会在 Actions 日志中显示推送失败。

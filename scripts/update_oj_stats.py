@@ -20,7 +20,7 @@ START = "<!-- OJ-STATS:START -->"
 END = "<!-- OJ-STATS:END -->"
 PLATFORMS = {
     "luogu": ("洛谷", "https://www.luogu.com.cn/user/{}"),
-    "nowcoder": ("牛客 ACM（练习）", "https://ac.nowcoder.com/acm/contest/profile/{}/practice-coding"),
+    "nowcoder": ("牛客（练习 / 比赛 / tracker）", "https://ac.nowcoder.com/acm/contest/profile/{}"),
     "leetcode": ("力扣中国站", "https://leetcode.cn/u/{}/"),
     "codeforces": ("Codeforces", "https://codeforces.com/profile/{}"),
     "atcoder": ("AtCoder", "https://atcoder.jp/users/{}"),
@@ -105,13 +105,171 @@ def parse_luogu(body, account):
     raise ValueError("洛谷主页未包含公开通过题数")
 
 
-def parse_nowcoder(body):
-    parser = PageParser()
-    parser.feed(body)
-    match = re.search(r"(?:^|\s)(\d+)\s+题已通过(?:\s|$)", " ".join(parser.text))
-    if not match:
-        raise ValueError("牛客练习页未包含公开通过题数")
-    return count_value(int(match.group(1)))
+def nowcoder_id(value):
+    if isinstance(value, bool) or not re.fullmatch(r"[1-9][0-9]*", str(value)):
+        raise ValueError("牛客记录缺少有效的题目或提交 ID")
+    return str(value)
+
+
+class NowcoderACMParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.rows = []
+        self.row = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self.row = {"text": [], "problem_id": None, "submission_id": None}
+        if tag == "a" and self.row is not None:
+            href = dict(attrs).get("href", "")
+            problem = re.fullmatch(r"/acm/problem/(\d+)", href)
+            if problem:
+                self.row["problem_id"] = nowcoder_id(problem.group(1))
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(href).query)
+            if "submissionId" in query:
+                self.row["submission_id"] = nowcoder_id(query["submissionId"][0])
+
+    def handle_data(self, data):
+        if self.row is not None and data.strip():
+            self.row["text"].append(data.strip())
+
+    def handle_endtag(self, tag):
+        if tag == "tr" and self.row is not None:
+            if self.row["submission_id"] is not None:
+                if self.row["problem_id"] is None:
+                    raise ValueError("牛客 ACM 提交记录缺少 problemId")
+                self.rows.append(self.row)
+            self.row = None
+
+
+def fetch_nowcoder_acm(client, account):
+    solved, seen = set(), set()
+    page, total, expected_solved = 1, None, None
+    while True:
+        query = urllib.parse.urlencode({"pageSize": 50, "page": page})
+        body = client.request(f"https://ac.nowcoder.com/acm/contest/profile/{account}/practice-coding?{query}")
+        identity = re.search(r'window\.curUser\.id\s*=\s*"(\d+)"', body)
+        if not identity or identity.group(1) != account:
+            raise ValueError("牛客 ACM 返回账号不匹配或页面不可用")
+        visible = PageParser()
+        visible.feed(body)
+        text = " ".join(visible.text)
+        submitted = re.search(r"(?:^|\s)(\d+)\s+次提交(?:\s|$)", text)
+        accepted = re.search(r"(?:^|\s)(\d+)\s+题已通过(?:\s|$)", text)
+        if not submitted or not accepted:
+            raise ValueError("牛客 ACM 提交统计数据不完整")
+        if total is None:
+            total, expected_solved = int(submitted.group(1)), int(accepted.group(1))
+        parser = NowcoderACMParser()
+        parser.feed(body)
+        for row in parser.rows:
+            if row["submission_id"] in seen:
+                raise ValueError("牛客 ACM 分页重复，无法确认完整统计")
+            seen.add(row["submission_id"])
+            if "答案正确" in row["text"]:
+                solved.add(row["problem_id"])
+        if len(seen) >= total:
+            if len(solved) != expected_solved:
+                raise ValueError("牛客 ACM 通过题目列表与汇总不一致")
+            return solved
+        if not parser.rows:
+            raise ValueError("牛客 ACM 提交分页提前结束")
+        page += 1
+        time.sleep(1.1)
+
+
+def nowcoder_data(response):
+    if response.get("code") != 0 or not isinstance(response.get("data"), dict):
+        raise ValueError("牛客公开接口返回错误")
+    return response["data"]
+
+
+def fetch_nowcoder_main(client, account):
+    # Main-site practice includes tracker/daily submissions. Its problem.id
+    # matches ACM problemId, so the union deduplicates both submission systems.
+    solved, seen = set(), set()
+    page, total = 1, None
+    while True:
+        data = nowcoder_data(client.json(
+            "https://gw-c.nowcoder.com/api/sparta/user/question-training/submission-history",
+            {"pageNo": page, "pageSize": 50, "userId": int(account)},
+        ))
+        records = data["records"]
+        if not isinstance(records, list) or data["current"] != page:
+            raise ValueError("牛客主站提交分页数据无效")
+        if total is None:
+            total = count_value(data["total"])
+        for record in records:
+            submission_id = nowcoder_id(record["submission"]["id"])
+            if submission_id in seen:
+                raise ValueError("牛客主站分页重复，无法确认完整统计")
+            seen.add(submission_id)
+            if record.get("accept") is True:
+                solved.add(nowcoder_id(record["problem"]["id"]))
+        # The API's size/totalPage fields are inconsistent with requested
+        # pageSize. Use the actual record count and total instead.
+        if len(seen) >= total:
+            return solved
+        if not records:
+            raise ValueError("牛客主站提交分页提前结束")
+        page += 1
+        time.sleep(1.1)
+
+
+def fetch_nowcoder_team(client, account):
+    contests = {}
+    for ended in ("true", "false"):
+        page = 1
+        while True:
+            query = urllib.parse.urlencode({"uid": account, "page": page, "onlyJoinedFilter": "true",
+                                           "onlyRatingFilter": "false", "contestEndFilter": ended})
+            data = nowcoder_data(client.json(
+                "https://ac.nowcoder.com/acm-heavy/acm/contest/profile/contest-joined-history?" + query))
+            for contest in data["dataList"]:
+                if contest["isTeamSignUp"]:
+                    contests[nowcoder_id(contest["contestId"])] = nowcoder_id(contest["teamId"])
+            if page >= count_value(data["pageInfo"]["pageCount"]):
+                break
+            page += 1
+            time.sleep(1.1)
+    solved = set()
+    for contest_id, team_id in contests.items():
+        page, seen = 1, set()
+        while True:
+            time.sleep(1.1)
+            query = urllib.parse.urlencode({"id": contest_id, "searchUserName": team_id,
+                                           "page": page, "pageSize": 50})
+            data = nowcoder_data(client.json(
+                "https://ac.nowcoder.com/acm-heavy/acm/contest/status-list?" + query))
+            info = data["basicInfo"]
+            if str(info["contestId"]) != contest_id or str(info["searchUserName"]) != team_id:
+                raise ValueError("牛客团队赛返回的过滤条件不匹配")
+            if info["pageCurrent"] != page:
+                raise ValueError("牛客团队赛返回的页码不匹配")
+            for record in data["data"]:
+                if str(record["userId"]) != team_id or record.get("isTeam") is not True:
+                    raise ValueError("牛客团队赛返回了其他账号记录")
+                submission_id = nowcoder_id(record["submissionId"])
+                if submission_id in seen:
+                    raise ValueError("牛客团队赛提交分页重复")
+                seen.add(submission_id)
+                if record["statusMessage"] == "答案正确":
+                    solved.add(nowcoder_id(record["problemId"]))
+            if page >= count_value(info["pageCount"]):
+                if len(seen) != count_value(info["statusCount"]):
+                    raise ValueError("牛客团队赛提交列表与汇总不一致")
+                break
+            if not data["data"]:
+                raise ValueError("牛客团队赛提交分页提前结束")
+            page += 1
+    return solved
+
+
+def fetch_nowcoder(client, account, include_team=False):
+    solved = fetch_nowcoder_acm(client, account) | fetch_nowcoder_main(client, account)
+    if include_team:
+        solved |= fetch_nowcoder_team(client, account)
+    return len(solved)
 
 
 def parse_leetcode(data):
@@ -155,7 +313,7 @@ def fetch_count(client, platform, account):
     if platform == "luogu":
         return parse_luogu(client.request(PLATFORMS[platform][1].format(encoded)), account)
     if platform == "nowcoder":
-        return parse_nowcoder(client.request(PLATFORMS[platform][1].format(encoded)))
+        return fetch_nowcoder(client, account)
     if platform == "leetcode":
         payload = {
             "query": "query($userSlug: String!) { userProfileUserQuestionProgress(userSlug: $userSlug) { numAcceptedQuestions { difficulty count } } }",
@@ -177,11 +335,16 @@ def collect(accounts, previous, client, now):
         account = accounts[platform]
         old = previous.get(platform, {})
         entry = {"account": account, "count": None, "updated_at": None, "status": "unavailable"}
+        if platform == "nowcoder":
+            entry["count_scope"] = "acm-main-team-v1" if accounts.get("nowcoder_include_team", False) else "acm-main-personal-v1"
         # Never carry another account's count over after a config change.
-        if old.get("account") == account:
+        if old.get("account") == account and (platform != "nowcoder" or old.get("count_scope") == entry["count_scope"]):
             entry.update({key: old.get(key) for key in ("count", "updated_at")})
         try:
-            entry.update(count=count_value(fetch_count(client, platform, account)),
+            value = (fetch_nowcoder(client, account, include_team=True)
+                     if platform == "nowcoder" and accounts.get("nowcoder_include_team", False)
+                     else fetch_count(client, platform, account))
+            entry.update(count=count_value(value),
                          updated_at=now, status="ok")
             print(f"{platform}: {entry['count']}")
         except (ValueError, KeyError, TypeError, OSError, http.client.HTTPException) as error:
@@ -209,7 +372,9 @@ def render(results):
     qualifier = "（不完整，仅汇总已有数据）" if incomplete else "（含历史数据）" if stale else ""
     lines += ["", f"**总通过题数：{total}{qualifier}**", "",
               "统计口径：平台内按题目去重，总数为各平台通过题数之和，跨平台同题重复计数。",
-              "牛客采用 ACM 练习页的“题已通过”，不包含比赛题；AtCoder 使用第三方 AtCoder Problems 的统计，可能有同步延迟。",
+              "牛客合并 ACM 个人提交（含个人比赛）与主站提交（含 tracker / 每日一题），按统一 problemId 去重；"
+              + ("团队赛包含自己参赛队伍的通过题目。" if results["nowcoder"].get("count_scope") == "acm-main-team-v1" else "团队赛仅计个人账号的通过记录，不计队伍账号的提交。"),
+              "AtCoder 使用第三方 AtCoder Problems 的统计，可能有同步延迟。",
               "每天北京时间 08:17 左右自动更新，也可在 GitHub Actions 中手动刷新。", END]
     return "\n".join(lines)
 
@@ -231,6 +396,8 @@ def main():
     for platform in PLATFORMS:
         if not isinstance(accounts.get(platform), str) or not re.fullmatch(r"[A-Za-z0-9_-]+", accounts[platform]):
             raise ValueError(f"{platform} 账号配置无效")
+    if type(accounts.get("nowcoder_include_team", False)) is not bool:
+        raise ValueError("nowcoder_include_team 必须为 true 或 false")
     path = ROOT / "data/oj_stats.json"
     previous = json.loads(path.read_text()) if path.exists() else {}
     readme_path = ROOT / "README.md"

@@ -19,11 +19,6 @@ class StatsTests(unittest.TestCase):
         self.assertEqual(stats.parse_luogu(body, "1817237"), 339)
         with self.assertRaises(ValueError):
             stats.parse_luogu(body, "123")
-        body = '<div>50</div><span>次提交</span><div>19</div><span>题已通过</span>'
-        self.assertEqual(stats.parse_nowcoder(body), 19)
-        self.assertEqual(stats.parse_nowcoder('<div>0</div><span>题已通过</span>'), 0)
-        with self.assertRaises(ValueError):
-            stats.parse_nowcoder('<script>19 题已通过</script><p>请登录</p>')
 
     def test_leetcode_counts_and_errors(self):
         def response(items):
@@ -62,6 +57,7 @@ class StatsTests(unittest.TestCase):
         previous = {platform: {"account": "user", "count": 10,
                                "updated_at": "2026-01-01 00:00:00"} for platform in stats.PLATFORMS}
         previous["luogu"]["account"] = "another-user"
+        previous["nowcoder"]["count_scope"] = "acm-main-personal-v1"
         with patch.object(stats, "fetch_count", side_effect=TimeoutError("timeout")):
             results = stats.collect(accounts, previous, None, "now")
         self.assertIsNone(results["luogu"]["count"])
@@ -96,6 +92,92 @@ class StatsTests(unittest.TestCase):
                 with self.assertRaises(stats.urllib.error.URLError):
                     client.request("https://example.com")
         self.assertEqual(request.call_count, 3)
+
+    def test_nowcoder_acm_rows_include_contest_and_reject_missing_ids(self):
+        parser = stats.NowcoderACMParser()
+        parser.feed('''<table><tr><td>运行ID</td></tr>
+            <tr><td><a href="/acm/contest/view-submission?submissionId=1">1</a></td>
+            <td><a href="/acm/problem/20">contest problem</a></td><td>答案正确</td></tr>
+            <tr><td><a href="/acm/contest/view-submission?submissionId=2">2</a></td>
+            <td><a href="/acm/problem/21">wrong answer</a></td><td>答案错误</td></tr></table>''')
+        self.assertEqual(len(parser.rows), 2)
+        self.assertEqual(parser.rows[0]["problem_id"], "20")
+        self.assertIn("答案正确", parser.rows[0]["text"])
+        with self.assertRaises(ValueError):
+            stats.NowcoderACMParser().feed('<tr><a href="?submissionId=1">1</a></tr>')
+
+    def test_nowcoder_main_pagination_deduplicates_tracker_and_practice(self):
+        def record(submission, problem, accepted=True):
+            return {"submission": {"id": submission}, "problem": {"id": problem}, "accept": accepted}
+        class Client:
+            def __init__(self):
+                self.calls = []
+
+            def json(self, url, payload):
+                self.calls.append(payload)
+                page = payload["pageNo"]
+                records = ([record(1, 20), record(2, 20), record(3, 21, False)] if page == 1
+                           else [record(4, 22)])
+                return {"code": 0, "data": {"current": page, "total": 4, "totalPage": 999, "records": records}}
+        client = Client()
+        with patch.object(stats.time, "sleep"):
+            self.assertEqual(stats.fetch_nowcoder_main(client, "439254888"), {"20", "22"})
+        self.assertEqual([x["pageNo"] for x in client.calls], [1, 2])
+        with patch.object(stats, "fetch_nowcoder_acm", return_value={"20", "30"}):
+            with patch.object(stats, "fetch_nowcoder_main", return_value={"20", "22"}):
+                with patch.object(stats, "fetch_nowcoder_team", return_value={"30", "40"}) as team:
+                    self.assertEqual(stats.fetch_nowcoder(None, "439254888"), 3)
+                    team.assert_not_called()
+                    self.assertEqual(stats.fetch_nowcoder(None, "439254888", True), 4)
+
+    def test_nowcoder_incomplete_history_is_failure(self):
+        class Client:
+            def json(self, url, payload):
+                return {"code": 0, "data": {"current": payload["pageNo"], "total": 5, "records": []}}
+        with self.assertRaises(ValueError):
+            stats.fetch_nowcoder_main(Client(), "439254888")
+        with self.assertRaises(ValueError):
+            stats.nowcoder_data({"code": 1, "data": {}})
+
+    def test_nowcoder_acm_pagination_and_summary_validation(self):
+        def page(rows):
+            return ('<script>window.curUser.id = "439254888";</script>'
+                    '<div>3</div><span>次提交</span><div>2</div><span>题已通过</span>'
+                    + ''.join(f'<tr><a href="?submissionId={submission}">{submission}</a>'
+                              f'<a href="/acm/problem/{problem}">题目</a><td>答案正确</td></tr>'
+                              for submission, problem in rows))
+        client = unittest.mock.Mock()
+        client.request.side_effect = [page([(1, 20), (2, 20)]), page([(3, 21)])]
+        with patch.object(stats.time, "sleep"):
+            self.assertEqual(stats.fetch_nowcoder_acm(client, "439254888"), {"20", "21"})
+        self.assertIn("page=2", client.request.call_args.args[0])
+        client.request.side_effect = [page([(1, 20)]), page([])]
+        with patch.object(stats.time, "sleep"), self.assertRaises(ValueError):
+            stats.fetch_nowcoder_acm(client, "439254888")
+        client.request.side_effect = ['<p>请登录</p>']
+        with self.assertRaises(ValueError):
+            stats.fetch_nowcoder_acm(client, "439254888")
+
+    def test_old_nowcoder_scope_not_reported_as_full_total(self):
+        accounts = {platform: "user" for platform in stats.PLATFORMS}
+        old = {"nowcoder": {"account": "user", "count": 19, "updated_at": "old", "status": "ok"}}
+        with patch.object(stats, "fetch_count", side_effect=TimeoutError("offline")):
+            results = stats.collect(accounts, old, None, "now")
+        self.assertIsNone(results["nowcoder"]["count"])
+        self.assertEqual(results["nowcoder"]["status"], "unavailable")
+
+    def test_nowcoder_team_records_validate_account_and_deduplicate(self):
+        class Client:
+            def json(self, url):
+                if "contest-joined-history" in url:
+                    return {"code": 0, "data": {"dataList": [
+                        {"isTeamSignUp": True, "contestId": 100, "teamId": 200},
+                        {"isTeamSignUp": False, "contestId": 101}], "pageInfo": {"pageCount": 1}}}
+                return {"code": 0, "data": {"basicInfo": {"contestId": 100, "searchUserName": "200", "pageCount": 1, "pageCurrent": 1, "statusCount": 2},
+                    "data": [{"userId": 200, "isTeam": True, "submissionId": 1, "statusMessage": "答案正确", "problemId": 20},
+                             {"userId": 200, "isTeam": True, "submissionId": 2, "statusMessage": "答案正确", "problemId": 20}]}}
+        with patch.object(stats.time, "sleep"):
+            self.assertEqual(stats.fetch_nowcoder_team(Client(), "439254888"), {"20"})
 
 
 if __name__ == "__main__":
