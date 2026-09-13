@@ -7,11 +7,11 @@
 
 | 平台 | 账号 | 通过题数 | 上次成功更新（北京时间） | 状态 |
 | --- | --- | ---: | --- | --- |
-| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 339 | 2026-09-13 11:36:04 | 正常 |
-| 牛客（练习 / 比赛 / tracker） | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 129 | 2026-09-13 11:36:04 | 正常 |
-| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-09-13 11:36:04 | 正常 |
-| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 86 | 2026-09-13 11:36:04 | 正常 |
-| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 40 | 2026-09-13 11:36:04 | 正常 |
+| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 339 | 2026-09-13 11:37:30 | 正常 |
+| 牛客（练习 / 比赛 / tracker） | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 129 | 2026-09-13 11:37:30 | 正常 |
+| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-09-13 11:37:30 | 正常 |
+| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 86 | 2026-09-13 11:37:30 | 正常 |
+| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 40 | 2026-09-13 11:37:30 | 正常 |
 
 **总通过题数：603**
 
