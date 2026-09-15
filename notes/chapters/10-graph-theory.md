@@ -97,6 +97,51 @@ bool topo(int n, vector<int>& res) {
 }
 ```
 
+### DFS 求拓扑序
+
+- **时间复杂度**：$O(V+E)$
+- **空间复杂度**：$O(V+E)$
+- **判环**：反复删除入度为 $0$ 的点；最终结果少于 $V$ 个点则存在环
+
+```cpp
+int vis[N];
+vector<int> res;
+
+bool dfs(int u) {
+    vis[u] = 1;
+    for (int e = head[u]; e; e = edge[e].ne) {
+        int v = edge[e].to;
+        if (vis[v] == 1) {
+            return false;
+        }
+        if (vis[v] == 0) {
+            if (!dfs(v)) {
+                return false;
+            }
+        }
+    }
+    vis[u] = 2;
+    res.push_back(u);
+    return true;
+}
+
+bool topo(int n) {
+    res.clear();
+    for (int i = 1; i <= n; ++i) {
+        vis[i] = 0;
+    }
+    for (int i = 1; i <= n; ++i) {
+        if (vis[i] == 0) {
+            if (!dfs(i)) {
+                return false;
+            }
+        }
+    }
+    reverse(res.begin(), res.end());
+    return true;
+}
+```
+
 ## 最短路
 
 ### Dijkstra 算法
