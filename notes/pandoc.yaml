@@ -1,0 +1,40 @@
+from: markdown
+to: pdf
+
+input-files:
+  - chapters/01-stl.md
+  - chapters/02-sorting.md
+  - chapters/03-dynamic-programming.md
+  - chapters/04-optimization.md
+  - chapters/05-miscellaneous.md
+  - chapters/06-construction.md
+  - chapters/07-data-structures.md
+  - chapters/08-mathematics.md
+  - chapters/09-number-theory.md
+  - chapters/10-graph-theory.md
+  - chapters/11-tree-theory.md
+
+metadata-file: metadata.yaml
+output-file: build/algorithm-templates.pdf
+pdf-engine: xelatex
+
+filters:
+  - filters/callouts.lua
+
+include-in-header:
+  - tex/header.tex
+
+standalone: true
+table-of-contents: true
+number-sections: true
+highlight-style: tango
+
+variables:
+  documentclass: article
+  papersize: a4
+  fontsize: 10pt
+  geometry: margin=1.8cm
+  colorlinks: true
+  CJKmainfont: Noto Serif CJK SC
+  CJKsansfont: Noto Sans CJK SC
+  CJKmonofont: Noto Sans Mono CJK SC

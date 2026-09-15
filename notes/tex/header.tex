@@ -1,0 +1,99 @@
+\usepackage[most]{tcolorbox}
+
+% Keep highlighted code blocks visually separated from surrounding prose/lists.
+% \addvspace collapses adjacent vertical skips instead of accumulating them.
+\renewenvironment{Shaded}
+  {\par\addvspace{0.6\baselineskip}\begin{snugshade}}
+  {\end{snugshade}\par\addvspace{0.6\baselineskip}}
+
+% Pandoc makes the table entries clickable, but does not bookmark the TOC page itself.
+\let\algorithmoldtableofcontents\tableofcontents
+\renewcommand{\tableofcontents}{%
+  \pdfbookmark[0]{\contentsname}{algorithm-toc}%
+  \algorithmoldtableofcontents
+}
+
+\definecolor{QuoteBorder}{HTML}{8A94A6}
+\definecolor{QuoteBackground}{HTML}{F5F6F8}
+\definecolor{NoteColor}{HTML}{3178C6}
+\definecolor{TipColor}{HTML}{2E8B57}
+\definecolor{ImportantColor}{HTML}{B26A00}
+\definecolor{WarningColor}{HTML}{B53A3A}
+
+\tcbset{
+  callout/.style={
+    enhanced,
+    breakable,
+    boxrule=0pt,
+    leftrule=2.6pt,
+    arc=0.8mm,
+    outer arc=0.8mm,
+    left=3mm,
+    right=3mm,
+    top=1.5mm,
+    bottom=2mm,
+    before skip=9pt,
+    after skip=9pt,
+    fonttitle=\bfseries,
+    colbacktitle=white,
+    attach boxed title to top left={xshift=2mm,yshift=-2mm},
+    boxed title style={
+      boxrule=0pt,
+      colback=white,
+      left=1mm,
+      right=1mm,
+      top=0pt,
+      bottom=0pt
+    }
+  }
+}
+
+\newtcolorbox{notebox}[1]{
+  callout,
+  colback=NoteColor!5,
+  colframe=NoteColor,
+  coltitle=NoteColor!75!black,
+  title={#1}
+}
+
+\newtcolorbox{tipbox}[1]{
+  callout,
+  colback=TipColor!5,
+  colframe=TipColor,
+  coltitle=TipColor!75!black,
+  title={#1}
+}
+
+\newtcolorbox{importantbox}[1]{
+  callout,
+  colback=ImportantColor!6,
+  colframe=ImportantColor,
+  coltitle=ImportantColor!70!black,
+  title={#1}
+}
+
+\newtcolorbox{warningbox}[1]{
+  callout,
+  colback=WarningColor!5,
+  colframe=WarningColor,
+  coltitle=WarningColor!75!black,
+  title={#1}
+}
+
+\renewenvironment{quote}
+  {\begin{tcolorbox}[
+    enhanced,
+    breakable,
+    colback=QuoteBackground,
+    colframe=QuoteBorder,
+    boxrule=0pt,
+    leftrule=2.2pt,
+    arc=0mm,
+    left=3mm,
+    right=3mm,
+    top=2mm,
+    bottom=2mm,
+    before skip=8pt,
+    after skip=8pt
+  ]}
+  {\end{tcolorbox}}
