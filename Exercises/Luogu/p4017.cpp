@@ -1,76 +1,149 @@
-// ========= 纯 dp =============
+// ========== 2026/09/17 topo 排序 + dp ==============
 
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
 
-typedef long long ll;
-
+const int N = 5e3 + 10;
+const int M = 5e5 + 10;
 const int MOD = 80112002;
-const int M = 5 * 1e5 + 10;
-const int N = 5 * 1e3 + 10;
-int in[N], out[N];
-ll dp[N];
 
-// 链式前向星建图
-struct { int to, ne; } edge[M];
-int head[N], cnt = 0;
+using ll = long long;
 
-int n, m;
+struct {
+    int ne, to;
+} edge[M];
+int head[N], cnt, in[N], out[N];
 
-void add_edge(int u, int v)
-{
-    cnt++;
-    edge[cnt].to = v;
-    edge[cnt].ne = head[u];
+void add_edge(int u, int v) {
+    edge[++cnt] = {head[u], v};
     head[u] = cnt;
-    in[v]++;
-    out[u]++;
+    ++in[v];
+    ++out[u];
 }
 
-int main()
-{
+void solve() {
+    int n, m;
     cin >> n >> m;
-    int u, v;
-    for (int i = 1; i <= m; i++)
-    {
-        cin >> u >> v;
-        add_edge(u, v);
+    for (int i = 1; i <= m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        add_edge(a, b);
     }
-    int l = 0, r = 0;
-    int q[N];
-    for (int i = 1; i <= n; i++)
-    {
-        if (in[i] == 0)
-        {
-            q[r++] = i;
-            // 初始化：入度为 0 的点为起点，本身就有一条路径通向终点
+
+    queue<int> q;
+    vector<ll> dp(n + 1, 0);
+
+    for (int i = 1; i <= n; ++i) {
+        if (in[i] == 0) {
+            q.push(i);
             dp[i] = 1;
         }
     }
 
-    while (l < r)
-    {
-        int u = q[l++];
-        for (int i = head[u]; i != 0; i = edge[i].ne)
-        {   
-            // 遍历 u 的所有邻居（后继结点）
-            int v = edge[i].to;
-            // 从 u 可以走到 v，因此所有能到达 u 的路径都是到达 v 的路径
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (--in[v] == 0) {
+                q.push(v);
+            }
             dp[v] = (dp[v] + dp[u]) % MOD;
-            if (--in[v] == 0)
-                q[r++] = v;
         }
     }
-    int ans = 0;
-    for (int i = 1; i <= n; i++)
-    {
-        if (out[i] == 0)
+
+    ll ans = 0;
+
+    for (int i = 1; i <= n; ++i) {
+        if (out[i] == 0) {
             ans = (ans + dp[i]) % MOD;
+        }
     }
-    cout << ans << '\n';
+
+    cout << ans << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    solve();
+
     return 0;
 }
 
+// ========= 纯 dp =============
+
+// #include <iostream>
+// using namespace std;
+
+// typedef long long ll;
+
+// const int MOD = 80112002;
+// const int M = 5 * 1e5 + 10;
+// const int N = 5 * 1e3 + 10;
+// int in[N], out[N];
+// ll dp[N];
+
+// // 链式前向星建图
+// struct { int to, ne; } edge[M];
+// int head[N], cnt = 0;
+
+// int n, m;
+
+// void add_edge(int u, int v)
+// {
+//     cnt++;
+//     edge[cnt].to = v;
+//     edge[cnt].ne = head[u];
+//     head[u] = cnt;
+//     in[v]++;
+//     out[u]++;
+// }
+
+// int main()
+// {
+//     cin >> n >> m;
+//     int u, v;
+//     for (int i = 1; i <= m; i++)
+//     {
+//         cin >> u >> v;
+//         add_edge(u, v);
+//     }
+//     int l = 0, r = 0;
+//     int q[N];
+//     for (int i = 1; i <= n; i++)
+//     {
+//         if (in[i] == 0)
+//         {
+//             q[r++] = i;
+//             // 初始化：入度为 0 的点为起点，本身就有一条路径通向终点
+//             dp[i] = 1;
+//         }
+//     }
+
+//     while (l < r)
+//     {
+//         int u = q[l++];
+//         for (int i = head[u]; i != 0; i = edge[i].ne)
+//         {
+//             // 遍历 u 的所有邻居（后继结点）
+//             int v = edge[i].to;
+//             // 从 u 可以走到 v，因此所有能到达 u 的路径都是到达 v 的路径
+//             dp[v] = (dp[v] + dp[u]) % MOD;
+//             if (--in[v] == 0)
+//                 q[r++] = v;
+//         }
+//     }
+//     int ans = 0;
+//     for (int i = 1; i <= n; i++)
+//     {
+//         if (out[i] == 0)
+//             ans = (ans + dp[i]) % MOD;
+//     }
+//     cout << ans << '\n';
+//     return 0;
+// }
 
 // =========== 记忆化 =============
 

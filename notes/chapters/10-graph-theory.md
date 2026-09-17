@@ -142,6 +142,106 @@ bool topo(int n) {
 }
 ```
 
+### DAG + DP
+
+看到这个组合，一般考虑拓扑排序
+
+> [!note]
+> 这里的 `dp` 和拓扑排序的逻辑其实是分开的，所以对 `dp` 计数时进行限制，不会影响拓扑排序的正确性
+
+[Luogu P1807 最长路](https://www.luogu.com.cn/problem/P1807)
+
+> 题目大意：$G$ 为有 $n$ 个顶点的有向无环图，编号从 $1$ 到 $n$，计算 $1$ 到 $n$ 的最长距离
+
+```cpp
+void solve() {
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 1; i <= m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        add_edge(u, v, w);
+    }
+
+    queue<int> q;
+    vector<int> dp(n + 1, -1e9);
+
+    for (int v = 1; v <= n; ++v) {
+        if (in[v] == 0) {
+            q.push(v);
+        }
+    }
+    dp[1] = 0;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            int w = edge[e].w;
+            if (dp[u] != -1e9) {
+                dp[v] = max(dp[v], dp[u] + w);
+            }
+            if (--in[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+
+    if (dp[n] == -1e9) {
+        cout << -1 << endl;
+    } else {
+        cout << dp[n] << endl;
+    }
+}
+```
+
+[Luogu P1685 游览](https://www.luogu.com.cn/problem/P1685)
+
+> 题目大意：一个带权（时间）有向无环图有 $n$ 个结点，编号从 $1$ 到 $n$，$m$ 条边，至少存在一条从 $s$ 到达 $e$ 的线路，从 $e$ 返回 $s$ 需要时间 $t$，问走完所有从 $s$ 到 $e$ 的路线的总时间
+
+```cpp
+void solve() {
+    int n, m, s, e, t;
+    cin >> n >> m >> s >> e >> t;
+    for (int i = 1; i <= m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        add_edge(u, v, w);
+    }
+
+    vector<int> cnt(n + 1, 0);
+    vector<ll> sum(n + 1, 0);
+    cnt[s] = 1;
+    queue<int> q;
+
+    for (int i = 1; i <= n; ++i) {
+        if (in[i] == 0) {
+            q.push(i);
+        }
+    }
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            int w = edge[e].w;
+            if (--in[v] == 0) {
+                q.push(v);
+            }
+            cnt[v] = (cnt[v] + cnt[u]) % MOD;
+            sum[v] = (sum[v] + sum[u] + 1ll * w * cnt[u]) % MOD;
+        }
+    }
+
+    int ans = (sum[e] + 1ll * (cnt[e] - 1) * t % MOD) % MOD;
+
+    cout << ans << endl;
+}
+```
+
 ## 最短路
 
 ### Dijkstra 算法
