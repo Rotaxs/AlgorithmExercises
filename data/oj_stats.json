@@ -1,8 +1,8 @@
 {
   "luogu": {
     "account": "1817237",
-    "count": 339,
-    "updated_at": "2026-09-17 12:57:31",
+    "count": 342,
+    "updated_at": "2026-09-17 21:35:13",
     "status": "ok"
   },
   "nowcoder": {
@@ -15,19 +15,19 @@
   "leetcode": {
     "account": "rotaxis",
     "count": 9,
-    "updated_at": "2026-09-17 12:57:31",
+    "updated_at": "2026-09-17 21:35:13",
     "status": "ok"
   },
   "codeforces": {
     "account": "rotaxis",
     "count": 86,
-    "updated_at": "2026-09-17 12:57:31",
+    "updated_at": "2026-09-17 21:35:13",
     "status": "ok"
   },
   "atcoder": {
     "account": "rotas",
     "count": 40,
-    "updated_at": "2026-09-17 12:57:31",
+    "updated_at": "2026-09-17 21:35:13",
     "status": "ok"
   }
 }

@@ -7,13 +7,13 @@
 
 | 平台 | 账号 | 通过题数 | 上次成功更新（北京时间） | 状态 |
 | --- | --- | ---: | --- | --- |
-| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 339 | 2026-09-17 12:57:31 | 正常 |
+| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 342 | 2026-09-17 21:35:13 | 正常 |
 | 牛客（练习 / 比赛 / tracker） | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 129 | 2026-09-13 11:36:04 | 获取失败，保留历史数据 |
-| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-09-17 12:57:31 | 正常 |
-| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 86 | 2026-09-17 12:57:31 | 正常 |
-| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 40 | 2026-09-17 12:57:31 | 正常 |
+| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-09-17 21:35:13 | 正常 |
+| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 86 | 2026-09-17 21:35:13 | 正常 |
+| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 40 | 2026-09-17 21:35:13 | 正常 |
 
-**总通过题数：603（含历史数据）**
+**总通过题数：606（含历史数据）**
 
 统计口径：平台内按题目去重，总数为各平台通过题数之和，跨平台同题重复计数。
 牛客合并 ACM 个人提交（含个人比赛）与主站提交（含 tracker / 每日一题），按统一 problemId 去重；团队赛包含自己参赛队伍的通过题目。
