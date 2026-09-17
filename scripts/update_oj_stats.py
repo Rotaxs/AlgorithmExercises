@@ -20,7 +20,7 @@ START = "<!-- OJ-STATS:START -->"
 END = "<!-- OJ-STATS:END -->"
 PLATFORMS = {
     "luogu": ("洛谷", "https://www.luogu.com.cn/user/{}"),
-    "nowcoder": ("牛客（练习 / 比赛 / tracker）", "https://ac.nowcoder.com/acm/contest/profile/{}"),
+    "nowcoder": ("牛客", "https://ac.nowcoder.com/acm/contest/profile/{}"),
     "leetcode": ("力扣中国站", "https://leetcode.cn/u/{}/"),
     "codeforces": ("Codeforces", "https://codeforces.com/profile/{}"),
     "atcoder": ("AtCoder", "https://atcoder.jp/users/{}"),
@@ -396,12 +396,7 @@ def render(results):
     stale = any(entry["status"] == "stale" for entry in results.values())
     qualifier = "（不完整，仅汇总已有数据）" if incomplete else "（含历史数据）" if stale else ""
     lines += ["", f"**总通过题数：{total}{qualifier}**", "",
-              "统计口径：平台内按题目去重，总数为各平台通过题数之和，跨平台同题重复计数。",
-              "牛客合并 ACM 个人提交（含个人比赛）与主站提交（含 tracker / 每日一题），按统一 problemId 去重；"
-              + ("团队赛包含自己参赛队伍的通过题目。" if results["nowcoder"].get("count_scope") == "acm-main-team-v1" else "团队赛仅计个人账号的通过记录，不计队伍账号的提交。"),
-              "VJudge 按来源 OJ 与题号组成的唯一标识统计公开通过题目。",
-              "AtCoder 使用第三方 AtCoder Problems 的统计，可能有同步延迟。",
-              "每天北京时间 08:17 左右自动更新，也可在 GitHub Actions 中手动刷新。", END]
+              "平台内按题目去重，跨平台同题分别计数；每天北京时间 08:17 左右自动更新。", END]
     return "\n".join(lines)
 
 
