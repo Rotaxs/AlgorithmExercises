@@ -24,6 +24,7 @@ PLATFORMS = {
     "leetcode": ("力扣中国站", "https://leetcode.cn/u/{}/"),
     "codeforces": ("Codeforces", "https://codeforces.com/profile/{}"),
     "atcoder": ("AtCoder", "https://atcoder.jp/users/{}"),
+    "vjudge": ("VJudge", "https://vjudge.net/user/{}"),
 }
 
 
@@ -226,6 +227,13 @@ def fetch_nowcoder_team(client, account):
             data = nowcoder_data(client.json(
                 "https://ac.nowcoder.com/acm-heavy/acm/contest/profile/contest-joined-history?" + query))
             for contest in data["dataList"]:
+                # Upcoming contests can appear before Nowcoder has created a
+                # participant identity. Such placeholders have neither field
+                # and cannot have team submissions yet.
+                if "isTeamSignUp" not in contest and "teamId" not in contest:
+                    continue
+                if type(contest.get("isTeamSignUp")) is not bool:
+                    raise ValueError("牛客参赛记录的团队报名标记无效")
                 if contest["isTeamSignUp"]:
                     contests[nowcoder_id(contest["contestId"])] = nowcoder_id(contest["teamId"])
             if page >= count_value(data["pageInfo"]["pageCount"]):
@@ -283,6 +291,21 @@ def parse_leetcode(data):
     return sum(count_value(item["count"]) for item in values)
 
 
+def parse_vjudge(data):
+    records = data.get("acRecords")
+    if not isinstance(records, dict):
+        raise ValueError("VJudge 通过题目数据不完整")
+    solved = set()
+    for oj, problems in records.items():
+        if not isinstance(oj, str) or not oj or not isinstance(problems, list):
+            raise ValueError("VJudge 通过题目数据格式无效")
+        for problem in problems:
+            if not isinstance(problem, str) or not problem:
+                raise ValueError("VJudge 通过记录缺少题目标识")
+            solved.add((oj, problem))
+    return len(solved)
+
+
 def fetch_codeforces(client, account):
     solved = set()
     offset, page_size = 1, 1000
@@ -326,6 +349,8 @@ def fetch_count(client, platform, account):
         return count_value(client.json(
             "https://kenkoooo.com/atcoder/atcoder-api/v3/user/ac_rank?user=" + encoded
         )["count"])
+    if platform == "vjudge":
+        return parse_vjudge(client.json("https://vjudge.net/user/solveDetail/" + encoded))
     raise ValueError("未知平台")
 
 
@@ -374,6 +399,7 @@ def render(results):
               "统计口径：平台内按题目去重，总数为各平台通过题数之和，跨平台同题重复计数。",
               "牛客合并 ACM 个人提交（含个人比赛）与主站提交（含 tracker / 每日一题），按统一 problemId 去重；"
               + ("团队赛包含自己参赛队伍的通过题目。" if results["nowcoder"].get("count_scope") == "acm-main-team-v1" else "团队赛仅计个人账号的通过记录，不计队伍账号的提交。"),
+              "VJudge 按来源 OJ 与题号组成的唯一标识统计公开通过题目。",
               "AtCoder 使用第三方 AtCoder Problems 的统计，可能有同步延迟。",
               "每天北京时间 08:17 左右自动更新，也可在 GitHub Actions 中手动刷新。", END]
     return "\n".join(lines)

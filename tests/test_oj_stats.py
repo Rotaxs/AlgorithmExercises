@@ -34,6 +34,24 @@ class StatsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 stats.count_value(value)
 
+    def test_vjudge_counts_unique_oj_problem_pairs(self):
+        data = {"acRecords": {
+            "CodeForces": ["230B", "801B", "230B"],
+            "HDU": ["1166"],
+        }, "failRecords": {"HDU": ["1754"]}}
+        self.assertEqual(stats.parse_vjudge(data), 3)
+        with self.assertRaises(ValueError):
+            stats.parse_vjudge({})
+        for records in ({"HDU": "1166"}, {"": ["1166"]}, {"HDU": [None]}):
+            with self.assertRaises(ValueError):
+                stats.parse_vjudge({"acRecords": records})
+
+    def test_vjudge_fetches_public_solve_details(self):
+        client = unittest.mock.Mock()
+        client.json.return_value = {"acRecords": {"POJ": ["2367"]}, "failRecords": {}}
+        self.assertEqual(stats.fetch_count(client, "vjudge", "name with space"), 1)
+        client.json.assert_called_once_with("https://vjudge.net/user/solveDetail/name%20with%20space")
+
     def test_codeforces_pagination_and_deduplication(self):
         accepted = {"verdict": "OK", "problem": {"contestId": 2258, "index": "C"}}
         wrong = {"verdict": "WRONG_ANSWER", "problem": {"contestId": 2258, "index": "D"}}
@@ -65,7 +83,8 @@ class StatsTests(unittest.TestCase):
         self.assertEqual(results["codeforces"]["count"], 10)
         self.assertEqual(results["codeforces"]["updated_at"], "2026-01-01 00:00:00")
         self.assertEqual(results["codeforces"]["status"], "stale")
-        self.assertIn("40（不完整", stats.render(results))
+        expected_total = 10 * (len(stats.PLATFORMS) - 1)
+        self.assertIn(f"{expected_total}（不完整", stats.render(results))
         with patch.object(stats, "fetch_count", return_value=0):
             results = stats.collect(accounts, previous, None, "now")
         self.assertTrue(all(entry["status"] == "ok" for entry in results.values()))
@@ -80,7 +99,7 @@ class StatsTests(unittest.TestCase):
         self.assertTrue(updated.startswith('# Intro\n'))
         self.assertTrue(updated.endswith('\n## Notes\n'))
         self.assertEqual(stats.replace_block(updated, stats.render(results)), updated)
-        self.assertIn("总通过题数：5", updated)
+        self.assertIn(f"总通过题数：{len(stats.PLATFORMS)}", updated)
         for bad in ('no markers', stats.END + stats.START, original + stats.START):
             with self.assertRaises(ValueError):
                 stats.replace_block(bad, block)
@@ -172,12 +191,22 @@ class StatsTests(unittest.TestCase):
                 if "contest-joined-history" in url:
                     return {"code": 0, "data": {"dataList": [
                         {"isTeamSignUp": True, "contestId": 100, "teamId": 200},
-                        {"isTeamSignUp": False, "contestId": 101}], "pageInfo": {"pageCount": 1}}}
+                        {"isTeamSignUp": False, "contestId": 101},
+                        {"contestId": 102, "contestName": "尚未生成报名身份的未来赛事"}],
+                        "pageInfo": {"pageCount": 1}}}
                 return {"code": 0, "data": {"basicInfo": {"contestId": 100, "searchUserName": "200", "pageCount": 1, "pageCurrent": 1, "statusCount": 2},
                     "data": [{"userId": 200, "isTeam": True, "submissionId": 1, "statusMessage": "答案正确", "problemId": 20},
                              {"userId": 200, "isTeam": True, "submissionId": 2, "statusMessage": "答案正确", "problemId": 20}]}}
         with patch.object(stats.time, "sleep"):
             self.assertEqual(stats.fetch_nowcoder_team(Client(), "439254888"), {"20"})
+
+    def test_nowcoder_team_rejects_partially_missing_signup_identity(self):
+        class Client:
+            def json(self, url):
+                return {"code": 0, "data": {"dataList": [
+                    {"contestId": 100, "teamId": 200}], "pageInfo": {"pageCount": 1}}}
+        with self.assertRaisesRegex(ValueError, "团队报名标记无效"):
+            stats.fetch_nowcoder_team(Client(), "439254888")
 
 
 if __name__ == "__main__":

@@ -4,5 +4,6 @@
   "nowcoder_include_team": true,
   "leetcode": "rotaxis",
   "codeforces": "rotaxis",
-  "atcoder": "rotas"
+  "atcoder": "rotas",
+  "vjudge": "rotas"
 }
