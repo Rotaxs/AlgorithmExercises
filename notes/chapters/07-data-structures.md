@@ -494,164 +494,71 @@ struct BIT {
 
 - **时间复杂度**：建树 $O(n)$，区间修改/查询 $O(\log n)$
 - **空间复杂度**：$O(n)$
-- **要点**：`tree[p]` 存节点区间和，`add[p]` 存尚未下传的整段增量
+- **要点**：`sum[p]` 存节点区间和，`addVal[p]` 存尚未下传的整段增量
 
 ```cpp
-const int N = 1e5 + 10;
-int arr[N];
-ll tree[N << 2], add[N << 2];
-int n;
-
-void pushUp(int p) {
-    tree[p] = tree[p << 1] + tree[p << 1 | 1];
-}
-
-void pushDown(int p, int l, int r) {
-    if (add[p]) {
+struct SegTree {
+    int n;
+    vector<int> arr;
+    vector<ll> sum, addVal;
+    SegTree(int n) : n(n), arr(n + 1, 0), sum((n + 1) << 2, 0), addVal((n + 1) << 2, 0) {
+    }
+    void pushUp(int p) {
+        sum[p] = sum[p << 1] + sum[p << 1 | 1];
+    }
+    void pushDown(int p, int l, int r) {
+        if (addVal[p]) {
+            int m = (l + r) >> 1;
+            addVal[p << 1] += addVal[p];
+            sum[p << 1] += (m - l + 1) * addVal[p];
+            addVal[p << 1 | 1] += addVal[p];
+            sum[p << 1 | 1] += (r - m) * addVal[p];
+            addVal[p] = 0;
+        }
+    }
+    void build(int p, int l, int r) {
+        if (l == r) {
+            sum[p] = arr[l];
+            return;
+        }
         int m = (l + r) >> 1;
-        add[p << 1] += add[p];
-        add[p << 1 | 1] += add[p];
-        tree[p << 1] += (m - l + 1) * add[p];
-        tree[p << 1 | 1] += (r - m) * add[p];
-        add[p] = 0;
+        build(p << 1, l, m);
+        build(p << 1 | 1, m + 1, r);
+        pushUp(p);
     }
-}
-
-void build(int l = 1, int r = n, int p = 1) {
-    add[p] = 0;
-    if (l == r) {
-        tree[p] = arr[l];
-        return;
+    void add(int ql, int qr, ll v, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            sum[p] += (r - l + 1) * v;
+            addVal[p] += v;
+            return;
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        if (ql <= m) add(ql, qr, v, p << 1, l, m);
+        if (qr > m) add(ql, qr, v, p << 1 | 1, m + 1, r);
+        pushUp(p);
     }
-    int m = (l + r) >> 1;
-    build(l, m, p << 1);
-    build(m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
-
-ll query(int ql, int qr, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        return tree[p];
+    ll query(int ql, int qr, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            return sum[p];
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        ll res = 0;
+        if (ql <= m) res += query(ql, qr, p << 1, l, m);
+        if (qr > m) res += query(ql, qr, p << 1 | 1, m + 1, r);
+        return res;
     }
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    ll ans = 0;
-    if (ql <= m) ans += query(ql, qr, l, m, p << 1);
-    if (qr > m) ans += query(ql, qr, m + 1, r, p << 1 | 1);
-    return ans;
-}
-
-void rangeAdd(int ql, int qr, ll v, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        add[p] += v;
-        tree[p] += (r - l + 1) * v;
-        return;
+    void build() {
+        build(1, 1, n);
     }
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    if (ql <= m) rangeAdd(ql, qr, v, l, m, p << 1);
-    if (qr > m) rangeAdd(ql, qr, v, m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
-```
-
-#### 区间 add + 区间 set
-
-- **时间复杂度**：建树 $O(n)$，区间修改/查询 $O(\log n)$
-- **空间复杂度**：$O(n)$
-- **标记复合**：`set` 覆盖旧 `set` 并清空 `add`；下传时先 `set` 后 `add`
-
-```cpp
-using ll = long long;
-
-const int N = 1e5 + 10;
-
-int arr[N];
-ll tree[N << 2], addVal[N << 2], setVal[N << 2];
-bool hasSet[N << 2];
-int n;
-
-void pushUp(int p) {
-    tree[p] = tree[p << 1] + tree[p << 1 | 1];
-}
-
-void pushDown(int p, int l, int r) {
-    int m = (l + r) >> 1;
-    if (hasSet[p]) {
-        hasSet[p << 1] = true;
-        setVal[p << 1] = setVal[p];
-        addVal[p << 1] = 0;
-        tree[p << 1] = (m - l + 1) * setVal[p];
-
-        hasSet[p << 1 | 1] = true;
-        setVal[p << 1 | 1] = setVal[p];
-        addVal[p << 1 | 1] = 0;
-        tree[p << 1 | 1] = (r - m) * setVal[p];
-
-        hasSet[p] = false;
+    void add(int l, int r, ll v) {
+        add(l, r, v, 1, 1, n);
     }
-
-    if (addVal[p]) {
-        addVal[p << 1] += addVal[p];
-        tree[p << 1] += (m - l + 1) * addVal[p];
-        addVal[p << 1 | 1] += addVal[p];
-        tree[p << 1 | 1] += (r - m) * addVal[p];
-        addVal[p] = 0;
+    ll query(int l, int r) {
+        return query(l, r, 1, 1, n);
     }
-}
-
-void build(int l = 1, int r = n, int p = 1) {
-    hasSet[p] = false;
-    addVal[p] = 0;
-    if (l == r) {
-        tree[p] = arr[l];
-        return;
-    }
-    int m = (l + r) >> 1;
-    build(l, m, p << 1);
-    build(m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
-
-ll query(int ql, int qr, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        return tree[p];
-    }
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    ll ans = 0;
-    if (ql <= m) ans += query(ql, qr, l, m, p << 1);
-    if (qr > m) ans += query(ql, qr, m + 1, r, p << 1 | 1);
-    return ans;
-}
-
-void rangeAdd(int ql, int qr, ll v, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        addVal[p] += v;
-        tree[p] += (r - l + 1) * v;
-        return;
-    }
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    if (ql <= m) rangeAdd(ql, qr, v, l, m, p << 1);
-    if (qr > m) rangeAdd(ql, qr, v, m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
-
-void rangeSet(int ql, int qr, ll v, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        hasSet[p] = true;
-        setVal[p] = v;
-        addVal[p] = 0;
-        tree[p] = (r - l + 1) * v;
-        return;
-    }
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    if (ql <= m) rangeSet(ql, qr, v, l, m, p << 1);
-    if (qr > m) rangeSet(ql, qr, v, m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
+};
 ```
 
 #### 区间 set
@@ -663,61 +570,174 @@ void rangeSet(int ql, int qr, ll v, int l = 1, int r = n, int p = 1) {
 - **空间复杂度**：$O(n)$
 
 ```cpp
-ll tree[N << 2], setVal[N << 2];
-bool hasSet[N << 2];
-
-void pushUp(int p) {
-    tree[p] = tree[p << 1] + tree[p << 1 | 1];
-}
-
-void applySet(int p, int l, int r, ll v) {
-    tree[p] = 1LL * (r - l + 1) * v;
-    setVal[p] = v;
-    hasSet[p] = true;
-}
-
-void pushDown(int p, int l, int r) {
-    if (!hasSet[p]) return;
-    int m = (l + r) >> 1;
-    applySet(p << 1, l, m, setVal[p]);
-    applySet(p << 1 | 1, m + 1, r, setVal[p]);
-    hasSet[p] = false;
-}
-
-void build(int l = 1, int r = n, int p = 1) {
-    hasSet[p] = false;
-    if (l == r) {
-        tree[p] = arr[l];
-        return;
+struct SegTree {
+    int n;
+    vector<int> arr;
+    vector<ll> sum, setVal;
+    vector<bool> hasSet;
+    SegTree(int n)
+        : n(n), arr(n + 1, 0), sum((n + 1) << 2, 0), setVal((n + 1) << 2, 0),
+          hasSet((n + 1) << 2, 0) {
     }
-    int m = (l + r) >> 1;
-    build(l, m, p << 1);
-    build(m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
-
-void rangeSet(int ql, int qr, ll v,
-              int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        applySet(p, l, r, v);
-        return;
+    void pushUp(int p) {
+        sum[p] = sum[p << 1] + sum[p << 1 | 1];
     }
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    if (ql <= m) rangeSet(ql, qr, v, l, m, p << 1);
-    if (qr > m) rangeSet(ql, qr, v, m + 1, r, p << 1 | 1);
-    pushUp(p);
-}
+    void pushDown(int p, int l, int r) {
+        if (hasSet[p]) {
+            int m = (l + r) >> 1;
+            setVal[p << 1] = setVal[p];
+            sum[p << 1] = (m - l + 1) * setVal[p];
+            hasSet[p << 1] = true;
+            setVal[p << 1 | 1] = setVal[p];
+            sum[p << 1 | 1] = (r - m) * setVal[p];
+            hasSet[p << 1 | 1] = true;
+            hasSet[p] = false;
+        }
+    }
+    void build(int p, int l, int r) {
+        if (l == r) {
+            sum[p] = arr[l];
+            return;
+        }
+        int m = (l + r) >> 1;
+        build(p << 1, l, m);
+        build(p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    void rangeSet(int ql, int qr, ll v, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            setVal[p] = v;
+            sum[p] = (r - l + 1) * v;
+            hasSet[p] = true;
+            return;
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        if (ql <= m) rangeSet(ql, qr, v, p << 1, l, m);
+        if (qr > m) rangeSet(ql, qr, v, p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    ll query(int ql, int qr, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            return sum[p];
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        ll res = 0;
+        if (ql <= m) res += query(ql, qr, p << 1, l, m);
+        if (qr > m) res += query(ql, qr, p << 1 | 1, m + 1, r);
+        return res;
+    }
+    void build() {
+        build(1, 1, n);
+    }
+    void rangeSet(int l, int r, ll v) {
+        rangeSet(l, r, v, 1, 1, n);
+    }
+    ll query(int l, int r) {
+        return query(l, r, 1, 1, n);
+    }
+};
+```
 
-ll query(int ql, int qr, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) return tree[p];
-    pushDown(p, l, r);
-    int m = (l + r) >> 1;
-    ll ans = 0;
-    if (ql <= m) ans += query(ql, qr, l, m, p << 1);
-    if (qr > m) ans += query(ql, qr, m + 1, r, p << 1 | 1);
-    return ans;
-}
+#### 区间 add + 区间 set
+
+- **时间复杂度**：建树 $O(n)$，区间修改/查询 $O(\log n)$
+- **空间复杂度**：$O(n)$
+- **标记复合**：`set` 覆盖旧 `set` 并清空 `add`；下传时先 `set` 后 `add`
+
+```cpp
+struct SegTree {
+    int n;
+    vector<int> arr;
+    vector<ll> sum, addVal, setVal;
+    vector<bool> hasSet;
+    SegTree(int n)
+        : n(n), arr(n + 1, 0), sum((n + 1) << 2, 0), addVal((n + 1) << 2, 0),
+          setVal((n + 1) << 2, 0), hasSet((n + 1) << 2, 0) {
+    }
+    void applySet(int p, int l, int r, ll v) {
+        sum[p] = (r - l + 1) * v;
+        setVal[p] = v;
+        hasSet[p] = true;
+        addVal[p] = 0;
+    }
+    void applyAdd(int p, int l, int r, ll v) {
+        sum[p] += (r - l + 1) * v;
+        addVal[p] += v;
+    }
+    void pushUp(int p) {
+        sum[p] = sum[p << 1] + sum[p << 1 | 1];
+    }
+    void pushDown(int p, int l, int r) {
+        int m = (l + r) >> 1;
+        if (hasSet[p]) {
+            applySet(p << 1, l, m, setVal[p]);
+            applySet(p << 1 | 1, m + 1, r, setVal[p]);
+            hasSet[p] = false;
+        }
+        if (addVal[p]) {
+            applyAdd(p << 1, l, m, addVal[p]);
+            applyAdd(p << 1 | 1, m + 1, r, addVal[p]);
+            addVal[p] = 0;
+        }
+    }
+    void build(int p, int l, int r) {
+        if (l == r) {
+            sum[p] = arr[l];
+            return;
+        }
+        int m = (l + r) >> 1;
+        build(p << 1, l, m);
+        build(p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    void rangeAdd(int ql, int qr, ll v, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            applyAdd(p, l, r, v);
+            return;
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        if (ql <= m) rangeAdd(ql, qr, v, p << 1, l, m);
+        if (qr > m) rangeAdd(ql, qr, v, p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    void rangeSet(int ql, int qr, ll v, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            applySet(p, l, r, v);
+            return;
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        if (ql <= m) rangeSet(ql, qr, v, p << 1, l, m);
+        if (qr > m) rangeSet(ql, qr, v, p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    ll query(int ql, int qr, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            return sum[p];
+        }
+        pushDown(p, l, r);
+        int m = (l + r) >> 1;
+        ll res = 0;
+        if (ql <= m) res += query(ql, qr, p << 1, l, m);
+        if (qr > m) res += query(ql, qr, p << 1 | 1, m + 1, r);
+        return res;
+    }
+    void build() {
+        build(1, 1, n);
+    }
+    void rangeAdd(int l, int r, ll v) {
+        rangeAdd(l, r, v, 1, 1, n);
+    }
+    void rangeSet(int l, int r, ll v) {
+        rangeSet(l, r, v, 1, 1, n);
+    }
+    ll query(int l, int r) {
+        return query(l, r, 1, 1, n);
+    }
+};
 ```
 
 ### 维护区间最大值/最小值
@@ -732,112 +752,129 @@ ll query(int ql, int qr, int l = 1, int r = n, int p = 1) {
 - **要点**：整段加同一个数时，区间最大值也只需加这个数，不乘区间长度
 
 ```cpp
-ll maxTree[N << 2], maxAdd[N << 2];
-
-void maxPushUp(int p) {
-    maxTree[p] = max(maxTree[p << 1], maxTree[p << 1 | 1]);
-}
-
-void maxPushDown(int p) {
-    if (maxAdd[p] == 0) return;
-    maxAdd[p << 1] += maxAdd[p];
-    maxTree[p << 1] += maxAdd[p];
-    maxAdd[p << 1 | 1] += maxAdd[p];
-    maxTree[p << 1 | 1] += maxAdd[p];
-    maxAdd[p] = 0;
-}
-
-void buildMax(int l = 1, int r = n, int p = 1) {
-    maxAdd[p] = 0;
-    if (l == r) {
-        maxTree[p] = arr[l];
-        return;
+struct SegTree {
+    int n;
+    vector<ll> arr, mx, addVal;
+    SegTree(int n) : n(n), arr(n + 1, 0), mx((n + 1) << 2, 0), addVal((n + 1) << 2, 0) {
     }
-    int m = (l + r) >> 1;
-    buildMax(l, m, p << 1);
-    buildMax(m + 1, r, p << 1 | 1);
-    maxPushUp(p);
-}
-
-void rangeAddMax(int ql, int qr, ll v,
-                 int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        maxAdd[p] += v;
-        maxTree[p] += v;
-        return;
+    void applyAdd(int p, ll v) {
+        mx[p] += v;
+        addVal[p] += v;
     }
-    maxPushDown(p);
-    int m = (l + r) >> 1;
-    if (ql <= m) rangeAddMax(ql, qr, v, l, m, p << 1);
-    if (qr > m) rangeAddMax(ql, qr, v, m + 1, r, p << 1 | 1);
-    maxPushUp(p);
-}
-
-ll queryMax(int ql, int qr, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) return maxTree[p];
-    maxPushDown(p);
-    int m = (l + r) >> 1;
-    ll ans = LLONG_MIN;
-    if (ql <= m) ans = max(ans, queryMax(ql, qr, l, m, p << 1));
-    if (qr > m) ans = max(ans, queryMax(ql, qr, m + 1, r, p << 1 | 1));
-    return ans;
-}
+    void pushUp(int p) {
+        mx[p] = max(mx[p << 1], mx[p << 1 | 1]);
+    }
+    void pushDown(int p) {
+        if (addVal[p] == 0) return;
+        applyAdd(p << 1, addVal[p]);
+        applyAdd(p << 1 | 1, addVal[p]);
+        addVal[p] = 0;
+    }
+    void build(int p, int l, int r) {
+        if (l == r) {
+            mx[p] = arr[l];
+            return;
+        }
+        int m = (l + r) >> 1;
+        build(p << 1, l, m);
+        build(p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    void rangeAdd(int ql, int qr, ll v, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            applyAdd(p, v);
+            return;
+        }
+        pushDown(p);
+        int m = (l + r) >> 1;
+        if (ql <= m) rangeAdd(ql, qr, v, p << 1, l, m);
+        if (qr > m) rangeAdd(ql, qr, v, p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    ll query(int ql, int qr, int p, int l, int r) {
+        if (ql <= l && r <= qr) return mx[p];
+        pushDown(p);
+        int m = (l + r) >> 1;
+        ll res = numeric_limits<ll>::lowest();
+        if (ql <= m) res = max(res, query(ql, qr, p << 1, l, m));
+        if (qr > m) res = max(res, query(ql, qr, p << 1 | 1, m + 1, r));
+        return res;
+    }
+    void build() {
+        build(1, 1, n);
+    }
+    void rangeAdd(int l, int r, ll v) {
+        rangeAdd(l, r, v, 1, 1, n);
+    }
+    ll query(int l, int r) {
+        return query(l, r, 1, 1, n);
+    }
+};
 ```
 
 #### 区间 set
 
 ```cpp
-ll maxTree[N << 2], maxSetVal[N << 2];
-bool maxHasSet[N << 2];
-
-void maxPushUp(int p) {
-    maxTree[p] = max(maxTree[p << 1], maxTree[p << 1 | 1]);
-}
-
-void applyMaxSet(int p, ll v) {
-    maxTree[p] = maxSetVal[p] = v;
-    maxHasSet[p] = true;
-}
-
-void maxPushDown(int p) {
-    if (!maxHasSet[p]) return;
-    applyMaxSet(p << 1, maxSetVal[p]);
-    applyMaxSet(p << 1 | 1, maxSetVal[p]);
-    maxHasSet[p] = false;
-}
-
-void buildMax(int l = 1, int r = n, int p = 1) {
-    maxHasSet[p] = false;
-    if (l == r) {
-        maxTree[p] = arr[l];
-        return;
+struct SegTree {
+    int n;
+    vector<ll> arr, mx, setVal;
+    vector<bool> hasSet;
+    SegTree(int n)
+        : n(n), arr(n + 1, 0), mx((n + 1) << 2, 0), setVal((n + 1) << 2, 0),
+          hasSet((n + 1) << 2, false) {
     }
-    int m = (l + r) >> 1;
-    buildMax(l, m, p << 1);
-    buildMax(m + 1, r, p << 1 | 1);
-    maxPushUp(p);
-}
-
-void rangeSetMax(int ql, int qr, ll v,
-                 int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) {
-        applyMaxSet(p, v);
-        return;
+    void applySet(int p, ll v) {
+        mx[p] = v;
+        setVal[p] = v;
+        hasSet[p] = true;
     }
-    maxPushDown(p);
-    int m = (l + r) >> 1;
-    if (ql <= m) rangeSetMax(ql, qr, v, l, m, p << 1);
-    if (qr > m) rangeSetMax(ql, qr, v, m + 1, r, p << 1 | 1);
-    maxPushUp(p);
-}
-
-ll queryMax(int ql, int qr, int l = 1, int r = n, int p = 1) {
-    if (ql <= l && r <= qr) return maxTree[p];
-    maxPushDown(p);
-    int m = (l + r) >> 1;
-    ll ans = LLONG_MIN;
-    if (ql <= m) ans = max(ans, queryMax(ql, qr, l, m, p << 1));
-    if (qr > m) ans = max(ans, queryMax(ql, qr, m + 1, r, p << 1 | 1));
-    return ans;
-}
+    void pushUp(int p) {
+        mx[p] = max(mx[p << 1], mx[p << 1 | 1]);
+    }
+    void pushDown(int p) {
+        if (!hasSet[p]) return;
+        applySet(p << 1, setVal[p]);
+        applySet(p << 1 | 1, setVal[p]);
+        hasSet[p] = false;
+    }
+    void build(int p, int l, int r) {
+        if (l == r) {
+            mx[p] = arr[l];
+            return;
+        }
+        int m = (l + r) >> 1;
+        build(p << 1, l, m);
+        build(p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    void rangeSet(int ql, int qr, ll v, int p, int l, int r) {
+        if (ql <= l && r <= qr) {
+            applySet(p, v);
+            return;
+        }
+        pushDown(p);
+        int m = (l + r) >> 1;
+        if (ql <= m) rangeSet(ql, qr, v, p << 1, l, m);
+        if (qr > m) rangeSet(ql, qr, v, p << 1 | 1, m + 1, r);
+        pushUp(p);
+    }
+    ll query(int ql, int qr, int p, int l, int r) {
+        if (ql <= l && r <= qr) return mx[p];
+        pushDown(p);
+        int m = (l + r) >> 1;
+        ll res = numeric_limits<ll>::lowest();
+        if (ql <= m) res = max(res, query(ql, qr, p << 1, l, m));
+        if (qr > m) res = max(res, query(ql, qr, p << 1 | 1, m + 1, r));
+        return res;
+    }
+    void build() {
+        build(1, 1, n);
+    }
+    void rangeSet(int l, int r, ll v) {
+        rangeSet(l, r, v, 1, 1, n);
+    }
+    ll query(int l, int r) {
+        return query(l, r, 1, 1, n);
+    }
+};
 ```
