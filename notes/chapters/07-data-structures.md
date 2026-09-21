@@ -35,190 +35,255 @@ for (int i = 1; i <= n; i++) {
 }
 ```
 
-#### 动态维护中位数与绝对距离和
+#### 动态维护第 $k$ 大/小（含删除操作）
 
-将较小的一半放在 `L`，较大的一半放在 `R`，并始终保持
-`L.size() == (size() + 1) / 2`。因此奇数个元素时，`L` 的最大值就是中位数。
+##### `multiset` 实现
 
-- **时间复杂度**：查询中位数和距离和 $O(1)$，插入、删除 $O(\log n)$
+- **时间复杂度**：查询 $O(1)$，插入与调整 $O(\log n)$
 - **空间复杂度**：$O(n)$
-
-基于 `multiset` 的实现支持准确删除任意一个已存在的值：
+- **要点**：用 `multiset` 代替 `priority_queue`，通过迭代器实现删除
 
 ```cpp
-template <typename T, typename Compare = less<T>>
 struct DualMultiset {
-    multiset<T, Compare> L, R;
-    Compare cmp;
-    long long sumL = 0, sumR = 0;
+    int k;
+    multiset<ll> small;
+    multiset<ll> big; // TopK
+    ll sum_big = 0;
 
-    explicit DualMultiset(Compare c = Compare()) : L(c), R(c), cmp(c) {}
-
-    size_t size() const { return L.size() + R.size(); }
-    bool empty() const { return size() == 0; }
-
-    const T& medianLeft() const {
-        assert(!L.empty());
-        return *prev(L.end());
+    DualMultiset(int k) : k(k) {
     }
-
-    const T& medianRight() const {
-        assert(!R.empty());
-        return *R.begin();
-    }
-
-    const T& median() const { return medianLeft(); }
-
     void balance() {
-        size_t need = (size() + 1) / 2;
-        while (L.size() > need) {
-            auto it = prev(L.end());
-            sumL -= *it;
-            sumR += *it;
-            R.insert(L.extract(it));
+        while ((int)big.size() < k && !small.empty()) {
+            auto it = prev(small.end()); // *prev(small.end()) 取到 small 中的最大值
+            ll x = *it;
+            small.erase(it);
+            big.insert(x);
+            sum_big += x;
         }
-        while (L.size() < need) {
-            auto it = R.begin();
-            sumR -= *it;
-            sumL += *it;
-            L.insert(R.extract(it));
+        while ((int)big.size() > k) {
+            auto it = big.begin(); // *big.begin() 取到 big 中的最小值
+            ll x = *it;
+            big.erase(it);
+            sum_big -= x;
+            small.insert(x);
         }
     }
-
-    void insert(const T& x) {
-        if (L.empty() || !cmp(medianLeft(), x)) {
-            L.insert(x);
-            sumL += x;
+    void insert(ll x) {
+        if (big.empty() || x > *big.begin()) {
+            big.insert(x);
+            sum_big += x;
         } else {
-            R.insert(x);
-            sumR += x;
+            small.insert(x);
         }
         balance();
     }
-
-    bool erase(const T& x) {
-        auto it = L.find(x);
-        if (it != L.end()) {
-            sumL -= *it;
-            L.erase(it);
-        } else {
-            auto jt = R.find(x);
-            if (jt == R.end()) return false;
-            sumR -= *jt;
-            R.erase(jt);
+    bool erase(ll x) {
+        auto it = big.find(x);
+        if (it != big.end()) {
+            sum_big -= x;
+            big.erase(it);
+            balance();
+            return true;
         }
-        balance();
-        return true;
-    }
-
-    long long getAbsDiffSum() const {
-        if (empty()) return 0;
-        long long mid = median();
-        return 1LL * L.size() * mid - sumL
-             + sumR - 1LL * R.size() * mid;
+        it = small.find(x);
+        if (it != small.end()) {
+            small.erase(it);
+            balance();
+            return true;
+        }
+        return false;
     }
 };
 ```
 
-数据量较大时，可用两个优先队列和懒删除降低常数。调用 `erase(x)` 前需保证
-`x` 当前存在。
+##### `priority_queue` + 懒标记
+
+- **时间复杂度**：查询 $O(1)$，删除/插入/平衡 $O(\log n)$
+- **空间复杂度**：$O(n)$
+- **要点**：`bigDel` 和 `smallDel` 维护要删除的元素，当 `big` 或 `small` 的堆顶恰好是 `Del` 的堆顶时，说明这个元素应当跳过（删除）
 
 ```cpp
-template <typename T>
-struct DualPriorityQueue {
-    priority_queue<T> L, deletedL;
-    priority_queue<T, vector<T>, greater<T>> R, deletedR;
-    long long sumL = 0, sumR = 0;
-    int sizeL = 0, sizeR = 0;
+struct DualHeap {
+    int k;
+    priority_queue<ll> big, bigDel;
+    priority_queue<ll, vector<ll>, greater<ll>> small, smallDel; // TopK
+    ll bigSum = 0, smallSum = 0;
+    int bigSize = 0, smallSize = 0;
 
-    int size() const { return sizeL + sizeR; }
-    bool empty() const { return size() == 0; }
-
-    void pruneL() {
-        while (!L.empty() && !deletedL.empty() && L.top() == deletedL.top()) {
-            L.pop();
-            deletedL.pop();
+    DualHeap(int k) : k(k) {
+    }
+    int size() {
+        return bigSize + smallSize;
+    }
+    bool empty() {
+        return size() == 0;
+    }
+    void pruneBig() { // 清理大根堆中已经被删除的元素
+        while (!big.empty() && !bigDel.empty() && big.top() == bigDel.top()) {
+            big.pop();
+            bigDel.pop();
         }
     }
-
-    void pruneR() {
-        while (!R.empty() && !deletedR.empty() && R.top() == deletedR.top()) {
-            R.pop();
-            deletedR.pop();
+    void pruneSmall() { // 清理小根堆中已经被删除的元素
+        while (!small.empty() && !smallDel.empty() && small.top() == smallDel.top()) {
+            small.pop();
+            smallDel.pop();
         }
     }
+    void balance() {
+        int K = min(k, size());
+        while (smallSize > K) {
+            pruneSmall();
+            ll x = small.top();
+            small.pop();
+            --smallSize;
+            smallSum -= x;
+            big.push(x);
+            ++bigSize;
+            bigSum += x;
+        }
+        while (smallSize < K) {
+            pruneBig();
+            ll x = big.top();
+            big.pop();
+            --bigSize;
+            bigSum -= x;
+            small.push(x);
+            ++smallSize;
+            smallSum += x;
+        }
+    }
+    void insert(ll x) {
+        pruneSmall();
+        if (smallSize < k || (smallSize > 0 && x > small.top())) {
+            small.push(x);
+            ++smallSize;
+            smallSum += x;
+        } else {
+            big.push(x);
+            ++bigSize;
+            bigSum += x;
+        }
+        balance();
+    }
+    void erase(ll x) {
+        pruneSmall(); // 因为下面要用到 small 的下一个 top，所以只需处理 small
+        if (smallSize > 0 && x >= small.top()) { // 判断 x 在 small
+            smallDel.push(x);
+            --smallSize;
+            smallSum -= x;
+        } else {
+            bigDel.push(x);
+            --bigSize;
+            bigSum -= x;
+        }
+        balance();
+    }
+    ll sumK() {
+        return smallSum;
+    }
+    ll kthLargest() {
+        assert(k > 0 && size() >= k);
+        pruneSmall();
+        return small.top();
+    }
+};
+```
 
+> [!warning]
+> 使用 `erase` 需要保证 `x` 存在
+
+#### 动态维护中位数与绝对距离和（含删除）
+
+- **时间复杂度**：查询中位数和距离和 $O(1)$，插入、删除 $O(\log n)$
+- **空间复杂度**：$O(n)$
+- **要点**
+  - 将较小的一半放在 `big`，较大的一半放在 `small`，并始终保持 `big.size() == (size() + 1) / 2`，因此奇数个元素时，`L` 的最大值就是中位数
+  - 求所有数到中位数的距离的和：`mid * bigSize - bigSum + smallSum - mid * smallSize;`
+
+```cpp
+struct DualHeap {
+    priority_queue<ll> big, bigDel;                              // 较小的一半，大根堆
+    priority_queue<ll, vector<ll>, greater<ll>> small, smallDel; // 较大的一半，小根堆
+    ll bigSum = 0, smallSum = 0;
+    int bigSize = 0, smallSize = 0;
+
+    int size() {
+        return bigSize + smallSize;
+    }
+    bool empty() {
+        return size() == 0;
+    }
+    void pruneBig() {
+        while (!big.empty() && !bigDel.empty() && big.top() == bigDel.top()) {
+            big.pop();
+            bigDel.pop();
+        }
+    }
+    void pruneSmall() {
+        while (!small.empty() && !smallDel.empty() && small.top() == smallDel.top()) {
+            small.pop();
+            smallDel.pop();
+        }
+    }
     void balance() {
         int need = (size() + 1) / 2;
-        while (sizeL > need) {
-            pruneL();
-            T x = L.top();
-            L.pop();
-            R.push(x);
-            --sizeL;
-            ++sizeR;
-            sumL -= x;
-            sumR += x;
+        while (bigSize > need) {
+            pruneBig();
+            ll x = big.top();
+            big.pop();
+            --bigSize;
+            bigSum -= x;
+            small.push(x);
+            ++smallSize;
+            smallSum += x;
         }
-        while (sizeL < need) {
-            pruneR();
-            T x = R.top();
-            R.pop();
-            L.push(x);
-            --sizeR;
-            ++sizeL;
-            sumR -= x;
-            sumL += x;
+        while (bigSize < need) {
+            pruneSmall();
+            ll x = small.top();
+            small.pop();
+            --smallSize;
+            smallSum -= x;
+            big.push(x);
+            ++bigSize;
+            bigSum += x;
         }
     }
-
-    void insert(const T& x) {
-        pruneL();
-        if (sizeL == 0 || x <= L.top()) {
-            L.push(x);
-            ++sizeL;
-            sumL += x;
+    void insert(ll x) {
+        pruneBig();
+        if (bigSize == 0 || x <= big.top()) {
+            big.push(x);
+            ++bigSize;
+            bigSum += x;
         } else {
-            R.push(x);
-            ++sizeR;
-            sumR += x;
+            small.push(x);
+            ++smallSize;
+            smallSum += x;
         }
         balance();
     }
-
-    void erase(const T& x) {
-        pruneL();
-        if (x <= L.top()) {
-            deletedL.push(x);
-            --sizeL;
-            sumL -= x;
+    void erase(ll x) {
+        pruneBig();
+        if (bigSize > 0 && x <= big.top()) {
+            bigDel.push(x);
+            --bigSize;
+            bigSum -= x;
         } else {
-            deletedR.push(x);
-            --sizeR;
-            sumR -= x;
+            smallDel.push(x);
+            --smallSize;
+            smallSum -= x;
         }
+
         balance();
     }
-
-    T medianLeft() {
-        assert(sizeL > 0);
-        pruneL();
-        return L.top();
+    ll median() {
+        pruneBig();
+        return big.top();
     }
-
-    T medianRight() {
-        assert(sizeR > 0);
-        pruneR();
-        return R.top();
-    }
-
-    T median() { return medianLeft(); }
-
-    long long getAbsDiffSum() {
+    ll absSum() {
         if (empty()) return 0;
-        long long mid = median();
-        return 1LL * mid * sizeL - sumL
-             + sumR - 1LL * mid * sizeR;
+        ll mid = median();
+        return mid * bigSize - bigSum + smallSum - mid * smallSize;
     }
 };
 ```
