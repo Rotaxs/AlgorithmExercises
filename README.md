@@ -45,3 +45,12 @@ python3 -m unittest discover -s tests -v
 ```
 
 使用 `--dry-run` 可只查看统计结果，不修改文件。
+
+## 代码行数
+
+```bash
+python3 scripts/count_cpp_lines.py
+python3 scripts/count_cpp_lines.py Exercises
+```
+
+脚本以制表符分隔的表格按文件类型和目录统计文件数、总行数、非空行数与空行数。第二条命令可查看 `Exercises/` 各子目录的明细；统计范围包括 Git 已跟踪文件和未忽略的新文件。
