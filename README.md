@@ -5,29 +5,28 @@
 <!-- OJ-STATS:START -->
 ## 刷题统计
 
-| 平台 | 账号 | 通过题数 | 上次成功更新（北京时间） | 状态 |
-| --- | --- | ---: | --- | --- |
-| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 346 | 2026-10-04 13:59:08 | 正常 |
-| 牛客 | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 129 | 2026-10-04 13:59:08 | 正常 |
-| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-10-04 13:59:08 | 正常 |
-| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 88 | 2026-10-04 13:59:08 | 正常 |
-| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 45 | 2026-10-04 13:59:08 | 正常 |
-| VJudge | [rotas](https://vjudge.net/user/rotas) | 8 | 2026-10-04 13:59:08 | 正常 |
+| 平台       | 账号                                                               | 通过题数 | 上次成功更新（北京时间） | 状态 |
+| ---------- | ------------------------------------------------------------------ | -------: | ------------------------ | ---- |
+| 洛谷       | [1817237](https://www.luogu.com.cn/user/1817237)                   |      346 | 2026-10-04 13:59:08      | 正常 |
+| 牛客       | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) |      129 | 2026-10-04 13:59:08      | 正常 |
+| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/)                          |        9 | 2026-10-04 13:59:08      | 正常 |
+| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis)                  |       88 | 2026-10-04 13:59:08      | 正常 |
+| AtCoder    | [rotas](https://atcoder.jp/users/rotas)                            |       45 | 2026-10-04 13:59:08      | 正常 |
+| VJudge     | [rotas](https://vjudge.net/user/rotas)                             |        8 | 2026-10-04 13:59:08      | 正常 |
 
 **总通过题数：625**
 
-平台内按题目去重，跨平台同题分别计数；每天北京时间 08:17 左右自动更新。
 <!-- OJ-STATS:END -->
 
 ## 仓库内容
 
-| 路径 | 内容 |
-| --- | --- |
-| [`Contests/`](Contests/) | AtCoder、Codeforces、牛客、ICPC/CCPC、CSP 等比赛代码 |
-| [`Exercises/`](Exercises/) | 洛谷、牛客、LeetCode、Codeforces 等平台练习 |
-| [`algorithm/`](algorithm/) | 数据结构、图论、数论、动态规划等算法实现 |
-| [`notes/`](notes/) | 按主题整理的算法笔记，可用 Pandoc 构建 PDF |
-| [`template.cpp`](template.cpp) | C++17 单文件提交模板 |
+| 路径                           | 内容                                                 |
+| ------------------------------ | ---------------------------------------------------- |
+| [`Contests/`](Contests/)       | AtCoder、Codeforces、牛客、ICPC/CCPC、CSP 等比赛代码 |
+| [`Exercises/`](Exercises/)     | 洛谷、牛客、LeetCode、Codeforces 等平台练习          |
+| [`algorithm/`](algorithm/)     | 数据结构、图论、数论、动态规划等算法实现             |
+| [`notes/`](notes/)             | 按主题整理的算法笔记，可用 Pandoc 构建 PDF           |
+| [`template.cpp`](template.cpp) | C++17 单文件提交模板                                 |
 
 ## 代码约定
 
