@@ -5,8 +5,8 @@ using namespace std;
 using ll = long long;
 using ull = unsigned long long;
 
-const int N = 1e5 + 10;
-const int M = 5e5 + 10;
+const int N = 1e4 + 10;
+const int M = 5e4 + 10;
 
 struct {
     int to, ne;
@@ -21,7 +21,7 @@ void addEdge(int u, int v) {
 int dfn[N], low[N], timer;
 int scc[N], sccSize[N], sccCnt;
 int stk[N], top;
-bool inStack[N];
+int inStack[N];
 
 void tarjan(int u) {
     dfn[u] = low[u] = ++timer;
@@ -37,14 +37,13 @@ void tarjan(int u) {
             low[u] = min(low[u], dfn[v]);
         }
     }
-
     if (dfn[u] == low[u]) {
         ++sccCnt;
         while (1) {
             int v = stk[top--];
             inStack[v] = false;
-            scc[v] = sccCnt;
             ++sccSize[sccCnt];
+            scc[v] = sccCnt;
             if (v == u) break;
         }
     }
@@ -54,7 +53,7 @@ void solve() {
     int n, m;
     cin >> n >> m;
 
-    vector<int> u(m), v(m);
+    vector<int> u(m), v(m), out(n + 1);
 
     for (int i = 0; i < m; ++i) {
         cin >> u[i] >> v[i];
@@ -65,20 +64,22 @@ void solve() {
         if (dfn[i] == 0) tarjan(i);
     }
 
-    vector<int> in(sccCnt + 1);
-
     for (int i = 0; i < m; ++i) {
         int scc1 = scc[u[i]];
         int scc2 = scc[v[i]];
         if (scc1 != scc2) {
-            ++in[scc2];
+            ++out[scc1];
         }
     }
 
-    int ans = 0;
+    int ans = 0, nums = 0;
     for (int i = 1; i <= sccCnt; ++i) {
-        if (in[i] == 0) {
-            ++ans;
+        if (out[i] == 0) {
+            if (++nums > 1) {
+                ans = 0;
+                break;
+            }
+            ans = sccSize[i];
         }
     }
 

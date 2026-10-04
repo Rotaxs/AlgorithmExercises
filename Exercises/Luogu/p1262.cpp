@@ -5,23 +5,26 @@ using namespace std;
 using ll = long long;
 using ull = unsigned long long;
 
-const int N = 1e5 + 10;
-const int M = 5e5 + 10;
+const int N = 3010;
+const int M = 8010;
+const int inf = 2e9;
 
 struct {
     int to, ne;
 } edge[M];
 int head[N], cnt;
 
+int dfn[N], low[N], timer;
+int stk[N], top;
+bool inStack[N];
+int scc[N], sccCnt; // scc[u] u 所属的强连通分量编号
+int sccSize[N];     // 各强连通分量的点数
+int cost[N], minCost[N];
+
 void addEdge(int u, int v) {
     edge[++cnt] = {v, head[u]};
     head[u] = cnt;
 }
-
-int dfn[N], low[N], timer;
-int scc[N], sccSize[N], sccCnt;
-int stk[N], top;
-bool inStack[N];
 
 void tarjan(int u) {
     dfn[u] = low[u] = ++timer;
@@ -30,44 +33,67 @@ void tarjan(int u) {
 
     for (int e = head[u]; e; e = edge[e].ne) {
         int v = edge[e].to;
-        if (dfn[v] == 0) {
+        if (!dfn[v]) { // 树边
             tarjan(v);
             low[u] = min(low[u], low[v]);
-        } else if (inStack[v]) {
+        } else if (inStack[v]) { // 回边
             low[u] = min(low[u], dfn[v]);
         }
     }
 
-    if (dfn[u] == low[u]) {
+    if (low[u] == dfn[u]) { // 封装口袋
         ++sccCnt;
+        minCost[sccCnt] = inf;
         while (1) {
             int v = stk[top--];
             inStack[v] = false;
             scc[v] = sccCnt;
             ++sccSize[sccCnt];
+            minCost[sccCnt] = min(minCost[sccCnt], cost[v]);
             if (v == u) break;
         }
     }
 }
 
 void solve() {
-    int n, m;
-    cin >> n >> m;
+    int n;
+    cin >> n;
+    int p;
+    cin >> p;
 
-    vector<int> u(m), v(m);
+    for (int i = 1; i <= n; ++i) {
+        cost[i] = inf;
+    }
 
-    for (int i = 0; i < m; ++i) {
+    for (int i = 1; i <= p; ++i) {
+        int x, c;
+        cin >> x >> c;
+        cost[x] = c;
+    }
+
+    int r;
+    cin >> r;
+
+    vector<int> u(r), v(r);
+    for (int i = 0; i < r; ++i) {
         cin >> u[i] >> v[i];
         addEdge(u[i], v[i]);
     }
 
-    for (int i = 1; i <= n; ++i) {
-        if (dfn[i] == 0) tarjan(i);
+    for (int u = 1; u <= n; ++u) {
+        if (cost[u] != inf && !dfn[u]) tarjan(u);
     }
 
-    vector<int> in(sccCnt + 1);
+    for (int u = 1; u <= n; ++u) {
+        if (scc[u] == 0) {
+            cout << "NO" << endl;
+            cout << u << endl;
+            return;
+        }
+    }
 
-    for (int i = 0; i < m; ++i) {
+    vector<int> in(n + 1);
+    for (int i = 0; i < r; ++i) {
         int scc1 = scc[u[i]];
         int scc2 = scc[v[i]];
         if (scc1 != scc2) {
@@ -78,10 +104,10 @@ void solve() {
     int ans = 0;
     for (int i = 1; i <= sccCnt; ++i) {
         if (in[i] == 0) {
-            ++ans;
+            ans += minCost[i];
         }
     }
-
+    cout << "YES" << endl;
     cout << ans << endl;
 }
 

@@ -574,8 +574,8 @@ bool spfa(int n, int m, int s) {
 - 遍历到树边，则继续跑 `tarjan`，遍历到回边，更新 `low`，当 `dfn == low` 时，封装口袋
 
 ```cpp
-const int N = 1e5 + 10; // 最大点数
-const int M = 5e5 + 10; // 最大边数
+const int N = 1e4 + 10; // 最大点数
+const int M = 5e4 + 10; // 最大边数
 
 struct {
     int to, ne;
@@ -631,6 +631,39 @@ void solve() {
 
     for (int u = 1; u <= n; ++u) {
         if (!dfn[u]) tarjan(u);
+    }
+}
+```
+
+### 缩点后统计入度/出度
+
+- 跑完 `tarjan` 后枚举所有的边，如果边上的两个结点在同一个强连通分量，则不产生新的入度/出度，否则两个结点分别所属的强连通分量产生入度和出度
+
+```cpp
+void solve() {
+    int n, m; cin >> n >> m;
+    vector<int> u(m), v(m), out(n + 1), in(n + 1);
+
+    for (int i = 0; i < m; ++i) {
+        cin >> u[i] >> v[i];
+        addEdge(u[i], v[i]);
+    }
+
+    for (int u = 1; u <= n; ++u) {
+        if (dfn[u] == 0) tarjan(u);
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int scc1 = scc[u[i]];
+        int scc2 = scc[v[i]];
+        if (scc1 != scc2) {
+            ++in[scc2];
+            ++out[scc1];
+        }
+    }
+
+    for (int i = 1; i <= sccCnt; ++i) {
+        // 使用 in[i]、out[i]
     }
 }
 ```
