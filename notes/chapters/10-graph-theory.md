@@ -635,7 +635,7 @@ void solve() {
 }
 ```
 
-### 缩点后统计入度/出度
+### 统计入度/出度
 
 - 跑完 `tarjan` 后枚举所有的边，如果边上的两个结点在同一个强连通分量，则不产生新的入度/出度，否则两个结点分别所属的强连通分量产生入度和出度
 
@@ -643,12 +643,10 @@ void solve() {
 void solve() {
     int n, m; cin >> n >> m;
     vector<int> u(m), v(m), out(n + 1), in(n + 1);
-
     for (int i = 0; i < m; ++i) {
         cin >> u[i] >> v[i];
         addEdge(u[i], v[i]);
     }
-
     for (int u = 1; u <= n; ++u) {
         if (dfn[u] == 0) tarjan(u);
     }
@@ -665,6 +663,39 @@ void solve() {
     for (int i = 1; i <= sccCnt; ++i) {
         // 使用 in[i]、out[i]
     }
+}
+```
+
+### 缩点
+
+- 覆盖原来的 `head` 数组，覆盖原图重新建边
+
+```cpp
+void solve() {
+    int n, m; cin >> n >> m;
+    vector<int> u(m), v(m), out(n + 1), in(n + 1);
+    for (int i = 0; i < m; ++i) {
+        cin >> u[i] >> v[i];
+        addEdge(u[i], v[i]);
+    }
+    for (int u = 1; u <= n; ++u) {
+        if (dfn[u] == 0) tarjan(u);
+    }
+
+    cnt = 0;
+    memset(head, 0, sizeof head);
+    vector<int> in(m + 1, 0);
+    for (int i = 0; i < m; ++i) {
+        int scc1 = scc[u[i]];
+        int scc2 = scc[v[i]];
+        if (scc1 != scc2) {
+            addEdge(scc1, scc2);
+            ++in[scc2];
+            ++out[scc1];
+        }
+    }
+
+    // 跑 topo 排序
 }
 ```
 
