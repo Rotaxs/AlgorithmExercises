@@ -395,8 +395,7 @@ def render(results):
     incomplete = any(entry["count"] is None for entry in results.values())
     stale = any(entry["status"] == "stale" for entry in results.values())
     qualifier = "（不完整，仅汇总已有数据）" if incomplete else "（含历史数据）" if stale else ""
-    lines += ["", f"**总通过题数：{total}{qualifier}**", "",
-              "平台内按题目去重，跨平台同题分别计数；每天北京时间 08:17 左右自动更新。", END]
+    lines += ["", f"**总通过题数：{total}{qualifier}**", END]
     return "\n".join(lines)
 
 
