@@ -246,13 +246,3 @@ void solve() {
     cout << qpow(a, b) << '\n';
 }
 ```
-
-## 其他
-
-### 曼哈顿距离
-
-[ABC460A](https://atcoder.jp/contests/abc480/tasks/abc480_a) ADjacent
-
-> 题目大意：给定一个 2 x 2 的矩阵，向其中四个格子分别填入 A、B、C、D 四个字母，判断所给矩阵中 A 和 D 是否相邻
-
-考虑曼哈顿距离，相邻意味着曼哈顿距离为 1

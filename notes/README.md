@@ -29,6 +29,3 @@ make pdf
 文档支持 Obsidian 风格的提示框：`[!note]`、`[!tip]`、
 `[!important]`、`[!warning]` 和 `[!caution]`。普通的 Markdown 引用块
 也会在 PDF 中显示为带左边框的浅灰色区域。
-
-拆分前的完整文档保存在 `archive/algorithm_templates.md`，仅作为迁移备份，
-不会参与 PDF 构建。
