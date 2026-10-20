@@ -14,6 +14,7 @@ input-files:
   - chapters/10-graph-theory.md
   - chapters/11-tree-theory.md
   - chapters/12-computational-geometry.md
+  - chapters/13-string.md
 
 metadata-file: metadata.yaml
 output-file: build/algorithm-templates.pdf
