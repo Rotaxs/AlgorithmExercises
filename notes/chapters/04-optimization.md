@@ -96,3 +96,57 @@ int main() {
     return 0;
 }
 ```
+
+## 树形 DP 转非递归
+
+树形 DP 往往需要通过子节点的信息推出父节点的信息，比如求每个节点的的子树的大小
+
+```cpp
+void dfs(int u, int fa) {
+    sz[u] = 1;
+
+    for (int e = head[u]; e; e = edge[e].ne) {
+        int v = edge[e].to;
+        if (v == fa) continue;
+        dfs(v, u);
+        sz[u] += sz[v];
+    }
+}
+```
+
+也就是说，如果按照先处理子节点的信息再处理父节点的顺序，也能够实现递推
+
+通过一个 `order` 数组存放节点的顺序
+
+```cpp
+vector<int> fa(n + 1, -1);
+vector<int> order;
+// 以 1 节点为根
+fa[1] = 0;
+order.push_back(1);
+
+for (int i = 0; i < (int)order.size(); ++i) {
+    int u = order[i];
+    for (int e = head[u]; e; e = edge[e].ne) {
+        int v = edge[e].to;
+        if (v == fa[u]) continue;
+        fa[v] = u;
+        order.push_back(v);
+    }
+}
+```
+
+然后倒序处理 `order` 即可
+
+```cpp
+vector<int> sz(n + 1, 1);
+
+for (int i = n - 1; i >= 0; --i) {
+    int u = order[i];
+    for (int e = head[u]; e; e = edge[e].ne) {
+        int v = edge[e].to;
+        if (v == fa[u]) continue;
+        sz[u] += sz[v];
+    }
+}
+```
