@@ -190,3 +190,243 @@ int getDiameter(int root = 1) {
     return ans;
 }
 ```
+
+## 子树大小
+
+- **时间复杂度**：$O(n)$
+- 核心是使用树形 dp，表示以某个节点（一般是 1）为树的根时，某一点极其子树的大小
+
+```cpp
+void solve() {
+    int n;
+    cin >> n;
+    for (int v = 2; v <= n; ++v) {
+        int u;
+        cin >> u;
+        addEdge(u, v);
+        addEdge(v, u);
+    }
+
+    // 递归
+    // vector<int> dp(n + 1, 1);
+    // function<void(int, int)> dfs = [&](int u, int fa) {
+    //     for (int e = head[u]; e; e = edge[e].ne) {
+    //         int v = edge[e].to;
+    //         if (v == fa) continue;
+    //         dfs(v, u);
+    //         dp[u] += dp[v];
+    //     }
+    // };
+    // dfs(1, 0);
+
+    // 非递归
+    vector<int> order, fa(n + 1);
+    fa[1] = 0;
+    order.push_back(1);
+
+    for (int i = 0; i < (int)order.size(); ++i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            fa[v] = u;
+            order.push_back(v);
+        }
+    }
+
+    vector<int> dp(n + 1, 1);
+    for (int i = n - 1; i >= 0; --i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            dp[u] += dp[v] + 1;
+        }
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cout << dp[i] << ' ';
+    }
+}
+```
+
+## 最大匹配边数量
+
+- **时间复杂度**：$O(n)$
+
+定义 $f_{i, 0}$ 表示节点 $i$ 的子树中，$i$ 不与其孩子节点匹配时，匹配边的最大数量，$f_{i, 1}$ 表示节点 $i$ 的子树中，$i$ 恰与其某一个孩子节点匹配时，匹配边的最大数量，那么有
+
+$$
+f_{u, 0} =  \sum_{v \in \mathrm{child}(u)}\max(f_{v, 0}, f_{v, 1})\\
+
+\begin{align}
+f_{u, 1} & = \max_{v \in \mathrm{child}(u)}\left(1 + f_{v, 0} + \sum_{w \in \mathrm{child}(u), w \neq v}\max(f_{w, 0}, f_{w, 1})\right) \\ 
+& = f_{u, 0} + \max_{v \in \mathrm{child}(u)}(1 + f_{v, 0} - \max(f_{v, 0}, f_{v, 1}))
+\end{align}
+$$
+
+```cpp
+void solve() {
+    int n; cin >> n;
+    for (int i = 1; i < n; ++i) {
+        int u, v; cin >> u >> v;
+        addEdge(u, v); addEdge(v, u);
+    }
+
+    vector<int> order, fa(n + 1, 0);
+    order.reserve(n);
+    order.push_back(1);
+    fa[1] = 0;
+
+    for (int i = 0; i < (int)order.size(); ++i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            order.push_back(v);
+            fa[v] = u;
+        }
+    }
+
+    vector<array<ll, 2>> f(n + 1, {0, 0});
+    for (int i = n - 1; i >= 0; --i) {
+        int u = order[i];
+        ll p = -inf;
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            f[u][0] += max(f[v][0], f[v][1]);
+            p = max(p, 1 + f[v][0] - max(f[v][0], f[v][1]));
+        }
+        f[u][1] = f[u][0] + p;
+    }
+
+    cout << max(f[1][0], f[1][1]) << endl;
+}
+```
+
+## 换根 DP
+
+### 求某点到其他节点的距离和
+
+- **时间复杂度**：$O(n)$
+
+可以先用普通树形 dp，求出以 1 为树根时每个节点到其子树的中其他节点的距离和（需要一个 `size` 数组作为辅助），那么节点 1 到其他节点的距离和就已经求出。然后考虑换根：当移动一条边（从 `u` 移到 `v`）时，相较于 `u` 根，`v` 就是子树减少了 `size[v]` 的距离，子树以外的部分增加了 `n - size[v]` 的距离（边权为 1），然后在树上递推即可
+
+```cpp
+void solve() {
+    int n; cin >> n;
+    for (int i = 1; i < n; ++i) {
+        int u, v; cin >> u >> v;
+        addEdge(u, v); addEdge(v, u);
+    }
+
+    vector<int> order, fa(n + 1, 0);
+    order.reserve(n); order.push_back(1);
+    fa[1] = 0;
+
+    for (int i = 0; i < (int)order.size(); ++i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            fa[v] = u;
+            order.push_back(v);
+        }
+    }
+
+    vector<ll> dist(n + 1, 0);
+    vector<int> sz(n + 1, 0);
+    for (int i = n - 1; i >= 0; --i) {
+        int u = order[i];
+        ++sz[u];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            sz[u] += sz[v];
+            dist[u] += dist[v] + sz[v];
+        }
+    }
+
+    vector<ll> ans(n + 1, 0);
+    ans[1] = dist[1];
+    for (int i = 0; i < n; ++i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            ans[v] = ans[u] + n - 2 * sz[v];
+        }
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cout << ans[i] << ' ';
+    }
+}
+```
+
+### 求某点到其他节点的最大距离
+
+- **时间复杂度**：$O(n)$
+
+先用普通树形 DP，求出以 1 为树根时，每个节点到其子树中其他节点的最大距离。发现只需要知道当前节点到其子树的最大距离 `down` 以及到子树以外部分的最大距离 `up` 即可，`down` 直接通过树形 dp 求解。`up` 可以考虑换根，当移动一条边时（从 `u` 移到 `v`），那么 `up[v]` 可以沿着父节点一路网上，即 `1 + up[u]`，也可以经父节点到兄弟节点，即 `1 + 1 + down[w]`，取最大值即可
+
+```cpp
+void solve() {
+    int n; cin >> n;
+    for (int i = 1; i < n; ++i) {
+        int u, v; cin >> u >> v;
+        addEdge(u, v); addEdge(v, u);
+    }
+
+    vector<int> order, fa(n + 1, 0);
+    order.reserve(n); order.push_back(1);
+    fa[1] = 0;
+
+    for (int i = 0; i < (int)order.size(); ++i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            order.push_back(v);
+            fa[v] = u;
+        }
+    }
+
+    vector<int> down(n + 1, 0), up(n + 1, 0);
+    for (int i = n - 1; i >= 0; --i) {
+        int u = order[i];
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            down[u] = max(down[u], down[v] + 1);
+        }
+    }
+
+    for (int u : order) {
+        int mx1 = 0, mx2 = 0, id = 0;
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            int d = down[v] + 1;
+            if (d >= mx1) {
+                mx2 = mx1;
+                mx1 = d;
+                id = v;
+            } else if (d > mx2) {
+                mx2 = d;
+            }
+        }
+        for (int e = head[u]; e; e = edge[e].ne) {
+            int v = edge[e].to;
+            if (v == fa[u]) continue;
+            int best = (v == id ? mx2 : mx1);
+            up[v] = 1 + max(up[u], best);
+        }
+    }
+
+    for (int u = 1; u <= n; ++u) {
+        cout << max(down[u], up[u]) << ' ';
+    }
+}
+```
