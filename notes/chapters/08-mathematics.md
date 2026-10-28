@@ -246,3 +246,155 @@ void solve() {
     cout << qpow(a, b) << '\n';
 }
 ```
+
+## 置换环
+
+### 置换环的定义和性质
+
+**置换环**：对一个**排列**，建立 $i \to a[i]$ 的边，会得到若干个环，这若干个环就是置换环
+- 交换排列中的两个元素，环的数量变化 1
+  - 如果交换的两个元素在同一个环中，环的数量减少 1
+  - 如果交换的两个元素不在同一个环中，环的数量增加 1
+- 把环数从 $c$ 增加到 $n$（有序序列），至少需要 $n - c$ 次交换，且 $n - c$ 次交换一定能做到
+
+> [!note]
+> 简单证明：假设排列大小为 $n$，置换环的数量为 $c$，每个置换环的长度为 $s_i\space(i = 1,2,\cdots,c)$。显然，将某一个置换环全部拆开（每个元素都指向自己），需要 $s_i - 1$ 次，因此，将所有的置换环拆开，需要 $\sum_{i=1}^{c}(s_i - 1) = n - c$
+
+### 置换环判断逆序数的奇偶性
+
+- **时间复杂度**：$O(n)$
+- **空间复杂度**：$O(n)$
+
+交换序列中的两个数，逆序对数奇偶性改变，置换环数**变化** 1，从而有 $I \equiv n - c \pmod 2$
+
+```cpp
+int getParityOfInversion(const vector<int>& a) {
+    int n = (int)a.size() - 1;
+    vector<bool> vis(n + 1, false);
+
+    int cnt = 0;
+    for (int u = 1; u <= n; ++u) {
+        if (vis[u]) continue;
+        ++cnt;
+        int v = u;
+        while (!vis[v]) {
+            vis[v] = true;
+            v = a[v];
+        }
+    }
+    return (n - cnt) & 1;
+}
+```
+
+> [!tip]
+> 注意这并不能说明置换环能够求出逆序对的具体数量，因为逆序对交换要求相邻两数交换，而这里的交换是任意两数的交换
+
+需要注意的是，当原序列不是一个排列时，需要通过离散化等方式将序列先转化为一个排列再使用置换环求解
+
+```cpp
+int getParityOfInversion(const vector<int>& a) {
+    int n = a.size() - 1;
+
+    vector<int> id(n);
+    iota(id.begin(), id.end(), 1);
+
+    sort(id.begin(), id.end(), [&](int i, int j) {
+        if (a[i] != a[j]) return a[i] < a[j];
+        return i < j;
+    });
+
+    // 稳定离散化
+    vector<int> p(n + 1);
+    for (int i = 0; i < n; ++i) {
+        p[id[i]] = i + 1;
+    }
+
+    // 计算置换环数量
+    vector<bool> vis(n + 1, false);
+    int cnt = 0;
+
+    for (int i = 1; i <= n; ++i) {
+        if (vis[i]) continue;
+
+        ++cnt;
+        int u = i;
+
+        while (!vis[u]) {
+            vis[u] = true;
+            u = p[u];
+        }
+    }
+
+    return (n - cnt) & 1;
+}
+```
+
+### 求原排列到目标排列的距离
+
+将原排列通过交换任意两个元素得到有序排列，需要 $n - c$ 次
+
+现给定两个排列 $p, q$，求将 $p$ 经过若干次交换任意两个元素得到 $q$ 所需要的最小交换次数
+
+为此，我们可以把 $q$ 定为一个基准，比如，假设 $p = [3, 2, 1, 4]$，$q = [2, 1, 3, 4]$，在 $q$ 中，2 是第一个元素，因此把 2 映射为 1，同理，将 1 映射为 2，3 映射为 3，4 映射为 4，从而得到 $p = [3, 1, 2, 4]$
+
+然后再求新的 $p$ 到有序排列的距离即可
+
+- **时间复杂度**：$O(n)$
+- **空间复杂度**：$O(n)$
+
+```cpp
+int getSwap(const vector<int>& a) {
+    int n = a.size() - 1;
+    vector<int> vis(n + 1, false);
+    int cnt = 0;
+
+    for (int u = 1; u <= n; ++u) {
+        if (vis[u]) continue;
+        ++cnt;
+        int v = u;
+        while (!vis[v]) {
+            vis[v] = true;
+            v = a[v];
+        }
+    }
+
+    return n - cnt;
+}
+
+void solve() {
+    int n = 4;
+    vector<int> p = {0, 3, 2, 1, 4};
+    vector<int> q = {0, 2, 1, 3, 4};
+
+    vector<int> id(n + 1, 0);
+    for (int i = 1; i <= n; ++i) {
+        id[q[i]] = i;
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        p[i] = id[p[i]];
+    }
+
+    cout << getSwap(p) << endl;
+}
+```
+
+**[CF1768D](https://codeforces.com/contest/1768/problem/D) Lucky Permutation**
+
+> 题目大意：给定一个大小为 $n$ 的排列，可以任意交换其中两个元素，求最终逆序数为 1 的排列所需要的最少交换次数
+
+逆序数为 1 的排列就是有序排列再交换相邻两个元素得到的排列
+
+将目标排列看作是有序排列交换了相邻的两个数，对应映射得到的原排列就是交换了相应的两个数，因此只要求新的排列到有序排列的距离即可
+
+设原排列的置换环个数为 $k$
+
+现分两种情况进行讨论
+
+若交换的两个元素在同一个置换环，则交换后置换环数量为 $k + 1$，最少交换次数为 $n - k - 1$
+
+若交换的两个元素在不同置换环，则交换后的置换环数量为 $k - 1$，最少交换次数为 $n - k + 1$
+
+因此，只要能找到存在相邻数在同一个环，则取答案为 $n - k - 1$，否则取 $n - k + 1$
+
+
