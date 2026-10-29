@@ -7,14 +7,14 @@
 
 | 平台 | 账号 | 通过题数 | 上次成功更新（北京时间） | 状态 |
 | --- | --- | ---: | --- | --- |
-| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 355 | 2026-10-29 13:53:40 | 正常 |
-| 牛客 | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 140 | 2026-10-29 13:53:40 | 正常 |
-| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-10-29 13:53:40 | 正常 |
-| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 108 | 2026-10-29 13:53:40 | 正常 |
-| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 50 | 2026-10-29 13:53:40 | 正常 |
-| VJudge | [rotas](https://vjudge.net/user/rotas) | 19 | 2026-10-29 13:53:40 | 正常 |
+| 洛谷 | [1817237](https://www.luogu.com.cn/user/1817237) | 355 | 2026-10-29 23:04:38 | 正常 |
+| 牛客 | [439254888](https://ac.nowcoder.com/acm/contest/profile/439254888) | 140 | 2026-10-29 23:04:38 | 正常 |
+| 力扣中国站 | [rotaxis](https://leetcode.cn/u/rotaxis/) | 9 | 2026-10-29 23:04:38 | 正常 |
+| Codeforces | [rotaxis](https://codeforces.com/profile/rotaxis) | 111 | 2026-10-29 23:04:38 | 正常 |
+| AtCoder | [rotas](https://atcoder.jp/users/rotas) | 50 | 2026-10-29 23:04:38 | 正常 |
+| VJudge | [rotas](https://vjudge.net/user/rotas) | 19 | 2026-10-29 23:04:38 | 正常 |
 
-**总通过题数：681**
+**总通过题数：684**
 <!-- OJ-STATS:END -->
 
 ## 仓库内容
