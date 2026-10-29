@@ -1,39 +1,39 @@
 {
   "luogu": {
     "account": "1817237",
-    "count": 354,
-    "updated_at": "2026-10-28 13:49:08",
+    "count": 355,
+    "updated_at": "2026-10-29 13:53:40",
     "status": "ok"
   },
   "nowcoder": {
     "account": "439254888",
     "count": 140,
-    "updated_at": "2026-10-28 13:49:08",
+    "updated_at": "2026-10-29 13:53:40",
     "status": "ok",
     "count_scope": "acm-main-team-v1"
   },
   "leetcode": {
     "account": "rotaxis",
     "count": 9,
-    "updated_at": "2026-10-28 13:49:08",
+    "updated_at": "2026-10-29 13:53:40",
     "status": "ok"
   },
   "codeforces": {
     "account": "rotaxis",
-    "count": 107,
-    "updated_at": "2026-10-28 13:49:08",
+    "count": 108,
+    "updated_at": "2026-10-29 13:53:40",
     "status": "ok"
   },
   "atcoder": {
     "account": "rotas",
     "count": 50,
-    "updated_at": "2026-10-28 13:49:08",
+    "updated_at": "2026-10-29 13:53:40",
     "status": "ok"
   },
   "vjudge": {
     "account": "rotas",
-    "count": 18,
-    "updated_at": "2026-10-28 13:49:08",
+    "count": 19,
+    "updated_at": "2026-10-29 13:53:40",
     "status": "ok"
   }
 }
