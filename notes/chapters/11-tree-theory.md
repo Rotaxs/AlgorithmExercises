@@ -257,12 +257,11 @@ void solve() {
 定义 $f_{i, 0}$ 表示节点 $i$ 的子树中，$i$ 不与其孩子节点匹配时，匹配边的最大数量，$f_{i, 1}$ 表示节点 $i$ 的子树中，$i$ 恰与其某一个孩子节点匹配时，匹配边的最大数量，那么有
 
 $$
-f_{u, 0} =  \sum_{v \in \mathrm{child}(u)}\max(f_{v, 0}, f_{v, 1})\\
-
-\begin{align}
-f_{u, 1} & = \max_{v \in \mathrm{child}(u)}\left(1 + f_{v, 0} + \sum_{w \in \mathrm{child}(u), w \neq v}\max(f_{w, 0}, f_{w, 1})\right) \\ 
+\begin{aligned}
+f_{u, 0} & = \sum_{v \in \mathrm{child}(u)}\max(f_{v, 0}, f_{v, 1}) \\
+f_{u, 1} & = \max_{v \in \mathrm{child}(u)}\left(1 + f_{v, 0} + \sum_{w \in \mathrm{child}(u), w \neq v}\max(f_{w, 0}, f_{w, 1})\right) \\
 & = f_{u, 0} + \max_{v \in \mathrm{child}(u)}(1 + f_{v, 0} - \max(f_{v, 0}, f_{v, 1}))
-\end{align}
+\end{aligned}
 $$
 
 ```cpp
