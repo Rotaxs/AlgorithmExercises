@@ -14,7 +14,9 @@ auto get_id = [&](int n) { return lower_bound(nums.begin(), nums.end(), n) - num
 
 ## 单峰函数二分
 
-**CF Round 1010 C2 Seating Arrangement**
+**CF2232 C2 Seating Arrangement**
+
+> 题目大意：有 $n$ 个人排成一个队列，还有 $x$ 张桌子，每张桌子有 $s$ 个椅子，这些人有三种性格：I（入座时必须是空桌子）、E（入座时必须是非空桌子）、A（都行），现在要安排这些人的座位，无法入座的直接请走，要求最多能安排多少人入座
 
 - **时间复杂度**：$O(n\log n)$
 - **空间复杂度**：$O(n)$，用于存储输入序列
