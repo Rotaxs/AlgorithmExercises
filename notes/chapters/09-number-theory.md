@@ -581,6 +581,7 @@ vector<int> get_factors(int n) {
 - 弃九法：一个 $x$ 进制数 $n$，其与其各位数之和 $s$ 在模 $x - 1$ 的意义下同余，即  $n \equiv s\pmod{x-1}$
 - $\gcd(a, b) = \gcd(a + kb, b)$
   - 假如 $b = la$，那么	 $\gcd(a, b) = \gcd(a + b, b) = \cdots = \gcd(a + (l - 1)b, b)$
+- 当我们希望 $a \mod k$ 最后的结果不包含 0，即当 $a$ 为 $k$ 的倍数时，我们希望得到的结果为 $k$ 而不是 $0$，可以使用 $(a - 1) \mod k + 1$
 
 
 
